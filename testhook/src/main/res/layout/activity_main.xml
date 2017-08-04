@@ -47,4 +47,11 @@
         android:text="一键获取"
         android:id="@+id/btn_onekey"
         />
+
+    <Button
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="提交信息"
+        android:id="@+id/btn_commit_info"
+        />
 </LinearLayout>

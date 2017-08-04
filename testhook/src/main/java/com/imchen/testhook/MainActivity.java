@@ -11,6 +11,7 @@ import android.location.LocationManager;
 import android.location.LocationProvider;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
+import android.os.Looper;
 import android.os.health.SystemHealthManager;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
@@ -20,6 +21,9 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
 
+import com.imchen.testhook.service.PhoneInfoService;
+import com.imchen.testhook.utils.HttpUtil;
+import com.imchen.testhook.utils.LogUtil;
 import com.imchen.testhook.utils.PhoneInfoUtil;
 
 import java.util.List;
@@ -32,6 +36,7 @@ public class MainActivity extends AppCompatActivity {
     private Button mLocationBtn;
     private Button mPropertiesBtn;
     private Button mOneKeyBtn;
+    private Button mCommitBtn;
     private int time = 0;
     private String locationProvider;
     private Location location;
@@ -53,6 +58,7 @@ public class MainActivity extends AppCompatActivity {
         mPropertiesBtn = (Button) findViewById(R.id.btn_properties);
         mPropertiesBtn = (Button) findViewById(R.id.btn_properties);
         mOneKeyBtn = (Button) findViewById(R.id.btn_onekey);
+        mCommitBtn= (Button) findViewById(R.id.btn_commit_info);
     }
 
     private void listenerInit() {
@@ -60,6 +66,7 @@ public class MainActivity extends AppCompatActivity {
         mWifiBtn.setOnClickListener(wifiClickListener);
         mLocationBtn.setOnClickListener(locationClickListenr);
         mOneKeyBtn.setOnClickListener(oneKeyOnClickListener);
+        mCommitBtn.setOnClickListener(commitOnClickListener);
     }
 
     public View.OnClickListener helloListener = new View.OnClickListener() {
@@ -91,6 +98,37 @@ public class MainActivity extends AppCompatActivity {
             phoneInfoUtil.getAllInfo(MainActivity.this);
         }
     };
+
+    public View.OnClickListener commitOnClickListener=new View.OnClickListener() {
+        @Override
+        public void onClick(View v) {
+            new Thread(myRunable).start();
+        }
+    };
+
+    Runnable myRunable=new Runnable() {
+        @Override
+        public void run() {
+            Looper.prepare();
+            PhoneInfoService service=new PhoneInfoService();
+            String info=service.getAllPhoneInfo();
+            LogUtil.log("info.json: "+info);
+            HttpUtil.doPost("192.168.1.123",info);
+            Looper.loop();
+        }
+    };
+
+//    public Thread commitThread=new Thread(myRunable);
+//        @Override
+//        public void run() {
+//            Looper.prepare();
+//            PhoneInfoService service=new PhoneInfoService();
+//            String info=service.getAllPhoneInfo();
+//            LogUtil.log("info.json: "+info);
+//            HttpUtil.doPost("192.168.1.123",info);
+//            Looper.loop();
+//        }
+//    });
 
     public void getBluetoothInfo() {
         BluetoothAdapter adapter = BluetoothAdapter.getDefaultAdapter();
