@@ -1,26 +1,31 @@
 package com.imchen.testhook;
 
 import android.Manifest;
+import android.app.ProgressDialog;
 import android.bluetooth.BluetoothAdapter;
-import android.bluetooth.BluetoothManager;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
-import android.location.LocationProvider;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
+import android.os.AsyncTask;
+import android.os.Bundle;
 import android.os.Looper;
-import android.os.health.SystemHealthManager;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.TextView;
 import android.widget.Toast;
 
+import com.imchen.testhook.Entity.Battery;
+import com.imchen.testhook.Entity.Bluetooth;
+import com.imchen.testhook.Entity.Build;
+import com.imchen.testhook.Entity.Telephony;
+import com.imchen.testhook.Entity.Wifi;
 import com.imchen.testhook.service.PhoneInfoService;
 import com.imchen.testhook.utils.HttpUtil;
 import com.imchen.testhook.utils.LogUtil;
@@ -37,10 +42,20 @@ public class MainActivity extends AppCompatActivity {
     private Button mPropertiesBtn;
     private Button mOneKeyBtn;
     private Button mCommitBtn;
+
+    private TextView mBluetoothTv;
+    private TextView mWifiTv;
+    private TextView mBatteryTv;
+    private TextView mTelePhoneTv;
+    private TextView mBuildTv;
+    private TextView mLocationTv;
+
+    private ProgressDialog progressDialog;
     private int time = 0;
     private String locationProvider;
     private Location location;
     private PhoneInfoUtil phoneInfoUtil;
+    private PhoneInfoService service;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -58,65 +73,118 @@ public class MainActivity extends AppCompatActivity {
         mPropertiesBtn = (Button) findViewById(R.id.btn_properties);
         mPropertiesBtn = (Button) findViewById(R.id.btn_properties);
         mOneKeyBtn = (Button) findViewById(R.id.btn_onekey);
-        mCommitBtn= (Button) findViewById(R.id.btn_commit_info);
+        mCommitBtn = (Button) findViewById(R.id.btn_commit_info);
+        mBluetoothTv = (TextView) findViewById(R.id.tv_bluetooth_info);
+        mBatteryTv = (TextView) findViewById(R.id.tv_battery_info);
+        mWifiTv = (TextView) findViewById(R.id.tv_wifi_info);
+        mLocationTv = (TextView) findViewById(R.id.tv_location_info);
+        mBuildTv = (TextView) findViewById(R.id.tv_build_info);
+        mTelePhoneTv= (TextView) findViewById(R.id.tv_telephone_info);
     }
 
     private void listenerInit() {
-        mHelloBtn.setOnClickListener(helloListener);
-        mWifiBtn.setOnClickListener(wifiClickListener);
-        mLocationBtn.setOnClickListener(locationClickListenr);
-        mOneKeyBtn.setOnClickListener(oneKeyOnClickListener);
-        mCommitBtn.setOnClickListener(commitOnClickListener);
+//        mHelloBtn.setOnClickListener(helloListener);
+//        mWifiBtn.setOnClickListener(wifiClickListener);
+//        mLocationBtn.setOnClickListener(locationClickListenr);
+        mOneKeyBtn.setOnClickListener(commitOnClickListener);
+//        mCommitBtn.setOnClickListener(commitOnClickListener);
     }
 
-    public View.OnClickListener helloListener = new View.OnClickListener() {
-        @Override
-        public void onClick(View v) {
-            Toast.makeText(getApplicationContext(), "click time:" + time, Toast.LENGTH_SHORT).show();
-            time++;
-            getBluetoothInfo();
-        }
-    };
+//    public View.OnClickListener helloListener = new View.OnClickListener() {
+//        @Override
+//        public void onClick(View v) {
+//            Toast.makeText(getApplicationContext(), "click time:" + time, Toast.LENGTH_SHORT).show();
+//            time++;
+//            getBluetoothInfo();
+//        }
+//    };
 
-    public View.OnClickListener wifiClickListener = new View.OnClickListener() {
-        @Override
-        public void onClick(View v) {
-            getWifiInfo();
-        }
-    };
+//    public View.OnClickListener wifiClickListener = new View.OnClickListener() {
+//        @Override
+//        public void onClick(View v) {
+//            getWifiInfo();
+//        }
+//    };
 
-    public View.OnClickListener locationClickListenr = new View.OnClickListener() {
-        @Override
-        public void onClick(View v) {
-            getLocationInfo();
-        }
-    };
+//    public View.OnClickListener locationClickListenr = new View.OnClickListener() {
+//        @Override
+//        public void onClick(View v) {
+//            getLocationInfo();
+//        }
+//    };
 
-    public View.OnClickListener oneKeyOnClickListener = new View.OnClickListener() {
-        @Override
-        public void onClick(View v) {
-            phoneInfoUtil.getAllInfo(MainActivity.this);
-        }
-    };
+//    public View.OnClickListener oneKeyOnClickListener = new View.OnClickListener() {
+//        @Override
+//        public void onClick(View v) {
+//            phoneInfoUtil.getAllInfo(MainActivity.this);
+//        }
+//    };
 
-    public View.OnClickListener commitOnClickListener=new View.OnClickListener() {
+    public View.OnClickListener commitOnClickListener = new View.OnClickListener() {
         @Override
         public void onClick(View v) {
             new Thread(myRunable).start();
+//            new updateViewTask().execute(service);
         }
     };
 
-    Runnable myRunable=new Runnable() {
+    Runnable myRunable = new Runnable() {
         @Override
         public void run() {
             Looper.prepare();
-            PhoneInfoService service=new PhoneInfoService();
-            String info=service.getAllPhoneInfo();
-            LogUtil.log("info.json: "+info);
-            HttpUtil.doPost("192.168.1.123",info);
+            service = new PhoneInfoService();
+            String info = service.getAllPhoneInfo();
+
+            new updateViewTask().execute(service);
+            LogUtil.log("info.json: " + info);
+            HttpUtil.doPost("192.168.1.123", info);
             Looper.loop();
         }
     };
+
+    private class updateViewTask extends AsyncTask {
+
+        @Override
+        protected Object doInBackground(Object[] params) {
+            return null;
+        }
+
+        @Override
+        protected void onPreExecute() {
+            progressDialog = new ProgressDialog(MainActivity.this);
+            progressDialog.setTitle("Loading");
+            progressDialog.setMessage("Please wait!");
+            progressDialog.show();
+        }
+
+        @Override
+        protected void onPostExecute(Object o) {
+            setViewInfo(service);
+            progressDialog.cancel();
+
+        }
+    }
+
+    public void setViewInfo(PhoneInfoService service) {
+        Battery battery = service.info.getBattery();
+        Bluetooth bluetooth = service.info.getBluetooth();
+        com.imchen.testhook.Entity.Location location = service.info.getLocation();
+        Wifi wifi = service.info.getWifi();
+        Telephony telephony = service.info.getTelephony();
+        Build build=service.info.getBuild();
+        try {
+            mBluetoothTv.setText("MAC Address: " + bluetooth.getAddress());
+            mBatteryTv.setText("Battery Level: " + battery.getLevel() + "\nBattery Scale: " + battery.getScale());
+            mTelePhoneTv.setText("DeviceId: " + telephony.getDeviceId() + "\nVoiceMailAlphaTag: " + telephony.getVoiceMailAlphaTag() +
+                    "\nGroupIdLevel1: " + telephony.getGroupIdLevel1());
+            mLocationTv.setText("Latitude: " + location.getInitLatitude() + "\nLongitude: " + location.getInitLongitude());
+            mWifiTv.setText("Wifi MAC: " + wifi.getMacAddress() + "\nWifi BSSID: " + wifi.getBSSID() + "\nIP: " + wifi.getIp());
+            mBuildTv.setText(build.toString());
+        } catch (Exception e) {
+            e.printStackTrace();
+            LogUtil.log(e);
+        }
+    }
 
 //    public Thread commitThread=new Thread(myRunable);
 //        @Override
@@ -129,98 +197,88 @@ public class MainActivity extends AppCompatActivity {
 //            Looper.loop();
 //        }
 //    });
+//
+//    public void getBluetoothInfo() {
+//        BluetoothAdapter adapter = BluetoothAdapter.getDefaultAdapter();
+//        if (adapter.isEnabled()) {
+//            Log.d(TAG, "getBluetoothInfo: address->>>" + adapter.getAddress());
+//        }
+//    }
+//
+//    public void getBluetoothInfo2() {
+//
+//    }
 
-    public void getBluetoothInfo() {
-        BluetoothAdapter adapter = BluetoothAdapter.getDefaultAdapter();
-        if (adapter.isEnabled()) {
-            Log.d(TAG, "getBluetoothInfo: address->>>" + adapter.getAddress());
-        }
-    }
+//    public void getWifiInfo() {
+//        WifiManager wifiManager = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
+//        if (wifiManager.isWifiEnabled()) {
+//            WifiInfo info = wifiManager.getConnectionInfo();
+//            String bssid = info.getBSSID();
+//            String macAddress = info.getMacAddress();
+//            String ipAddress = intToIp(info.getIpAddress());
+//            Log.d(TAG, "getWifiInfo: \n bssid->>>" + bssid + "\n madAddress->>>" + macAddress + "\n ipAddress->>" + ipAddress);
+//        }
+//    }
 
-    public void getBluetoothInfo2() {
+//    public void getLocationInfo() {
+//        LocationManager locationManager = (LocationManager) getApplicationContext().getSystemService(Context.LOCATION_SERVICE);
+//        List<String> providers = locationManager.getProviders(true);
+//        if (providers.contains(LocationManager.GPS_PROVIDER)) {
+//            //如果是GPS
+//            locationProvider = LocationManager.GPS_PROVIDER;
+//            Log.d(TAG, "use providers ->" + locationProvider);
+//        } else if (providers.contains(LocationManager.NETWORK_PROVIDER)) {
+//            //如果是Network
+//            locationProvider = LocationManager.NETWORK_PROVIDER;
+//            Log.d(TAG, "use providers ->" + locationProvider);
+//        } else {
+//            Toast.makeText(this, "没有可用的位置提供器", Toast.LENGTH_SHORT).show();
+//            return;
+//        }
+//        Log.d(TAG, "getLocation: getProvider:" + providers.toString());
+//        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+//            Toast.makeText(getApplicationContext(), "Permission Denied!", Toast.LENGTH_SHORT).show();
+//            return;
+//        }
+//        location = locationManager.getLastKnownLocation(locationProvider);
+//        if (location == null) {
+//            locationManager.requestLocationUpdates(locationProvider, 60000, 1.0f, mLocationListener);
+//            Log.d(TAG, "getLocationInfo: \n update location ing...");
+//        } else {
+//            Log.d(TAG, "getLocationInfo: \n lat:" + location.getLatitude() + "\n lot:" + location.getLongitude());
+//        }
+//        if (location != null && mLocationListener != null) {
+//            locationManager.removeUpdates(mLocationListener);
+//        }
+//    }
 
-    }
+//    private LocationListener mLocationListener = new LocationListener() {
+//        @Override
+//        public void onLocationChanged(Location location) {
+//            Log.i(TAG, "时间：" + location.getTime());
+//            Log.i(TAG, "经度：" + location.getLongitude());
+//            Log.i(TAG, "纬度：" + location.getLatitude());
+//            Log.i(TAG, "海拔：" + location.getAltitude());
+//        }
+//
+//        @Override
+//        public void onStatusChanged(String provider, int status, Bundle extras) {
+//            Log.d(TAG, "onStatusChanged: ");
+//        }
+//
+//        @Override
+//        public void onProviderEnabled(String provider) {
+//            Log.d(TAG, "getLocation: lat:" + location.getLatitude() + " lot:" + location.getLongitude());
+//        }
+//
+//        @Override
+//        public void onProviderDisabled(String provider) {
+//            Log.d(TAG, "onProviderDisabled: ");
+//        }
+//    };
 
-    public void getWifiInfo() {
-        WifiManager wifiManager = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
-        if (wifiManager.isWifiEnabled()) {
-            WifiInfo info = wifiManager.getConnectionInfo();
-            String bssid = info.getBSSID();
-            String macAddress = info.getMacAddress();
-            String ipAddress = intToIp(info.getIpAddress());
-            Log.d(TAG, "getWifiInfo: \n bssid->>>" + bssid + "\n madAddress->>>" + macAddress + "\n ipAddress->>" + ipAddress);
-        }
-    }
-
-    public void getProperties() {
-
-    }
-
-    public void getLocationInfo() {
-        LocationManager locationManager = (LocationManager) getApplicationContext().getSystemService(Context.LOCATION_SERVICE);
-        List<String> providers = locationManager.getProviders(true);
-        if (providers.contains(LocationManager.GPS_PROVIDER)) {
-            //如果是GPS
-            locationProvider = LocationManager.GPS_PROVIDER;
-            Log.d(TAG, "use providers ->" + locationProvider);
-        } else if (providers.contains(LocationManager.NETWORK_PROVIDER)) {
-            //如果是Network
-            locationProvider = LocationManager.NETWORK_PROVIDER;
-            Log.d(TAG, "use providers ->" + locationProvider);
-        } else {
-            Toast.makeText(this, "没有可用的位置提供器", Toast.LENGTH_SHORT).show();
-            return;
-        }
-        Log.d(TAG, "getLocation: getProvider:" + providers.toString());
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            Toast.makeText(getApplicationContext(), "Permission Denied!", Toast.LENGTH_SHORT).show();
-            return;
-        }
-        location = locationManager.getLastKnownLocation(locationProvider);
-        if (location == null) {
-            locationManager.requestLocationUpdates(locationProvider, 60000, 1.0f, mLocationListener);
-            Log.d(TAG, "getLocationInfo: \n update location ing...");
-        } else {
-            Log.d(TAG, "getLocationInfo: \n lat:" + location.getLatitude() + "\n lot:" + location.getLongitude());
-        }
-        if (location != null && mLocationListener != null) {
-            locationManager.removeUpdates(mLocationListener);
-        }
-    }
-
-    private LocationListener mLocationListener = new LocationListener() {
-        @Override
-        public void onLocationChanged(Location location) {
-            Log.i(TAG, "时间：" + location.getTime());
-            Log.i(TAG, "经度：" + location.getLongitude());
-            Log.i(TAG, "纬度：" + location.getLatitude());
-            Log.i(TAG, "海拔：" + location.getAltitude());
-        }
-
-        @Override
-        public void onStatusChanged(String provider, int status, Bundle extras) {
-            Log.d(TAG, "onStatusChanged: ");
-        }
-
-        @Override
-        public void onProviderEnabled(String provider) {
-            Log.d(TAG, "getLocation: lat:" + location.getLatitude() + " lot:" + location.getLongitude());
-        }
-
-        @Override
-        public void onProviderDisabled(String provider) {
-            Log.d(TAG, "onProviderDisabled: ");
-        }
-    };
-
-    /**
-     * 整形转ip
-     *
-     * @param ip
-     * @return
-     */
-    private String intToIp(int ip) {
-        return (ip & 0xFF) + "." + ((ip >> 8) & 0xFF) + "." + ((ip >> 16) & 0xFF) + "."
-                + ((ip >> 24) & 0xFF);
-    }
+//    private String intToIp(int ip) {
+//        return (ip & 0xFF) + "." + ((ip >> 8) & 0xFF) + "." + ((ip >> 16) & 0xFF) + "."
+//                + ((ip >> 24) & 0xFF);
+//    }
 }

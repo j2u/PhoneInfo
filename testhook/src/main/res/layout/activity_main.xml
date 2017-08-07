@@ -4,18 +4,95 @@
     android:layout_height="match_parent"
     android:orientation="vertical">
 
-    <TextView
-        android:id="@+id/tv_address_title"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Bluetooth Address:" />
-
-    <TextView
-        android:id="@+id/tv_address"
+    <Button
+        android:id="@+id/btn_onekey"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@color/colorAccent"
-        />
+        android:text="一键获取" />
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="蓝牙info:"
+                android:textColor="#262cd7" />
+
+            <TextView
+                android:id="@+id/tv_bluetooth_info"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:hint="蓝牙 info" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="WIFI info:"
+                android:textColor="#262cd7" />
+
+            <TextView
+                android:id="@+id/tv_wifi_info"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:hint="WIFI info" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="位置 info:"
+                android:textColor="#262cd7" />
+
+            <TextView
+                android:id="@+id/tv_location_info"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:hint="地理 info" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:text="电话 info:"
+                android:textColor="#262cd7" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:id="@+id/tv_telephone_info"
+                android:hint="电话 info" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:text="电池 info:"
+                android:textColor="#262cd7" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:id="@+id/tv_battery_info"
+                android:hint="电池 info" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Build info:"
+                android:textColor="#262cd7" />
+
+            <TextView
+                android:id="@+id/tv_build_info"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:hint="Build info" />
+        </LinearLayout>
+    </ScrollView>
+
 
     <Button
         android:id="@+id/btn_hello"
@@ -24,34 +101,26 @@
         android:text="蓝牙" />
 
     <Button
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="wifi"
         android:id="@+id/btc_wifi"
-        />
-    <Button
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="位置"
-        android:id="@+id/btn_location"
-        />
-    <Button
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="配置"
-        android:id="@+id/btn_properties"
-        />
-    <Button
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="一键获取"
-        android:id="@+id/btn_onekey"
-        />
+        android:text="wifi" />
 
     <Button
+        android:id="@+id/btn_location"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="位置" />
+
+    <Button
+        android:id="@+id/btn_properties"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="配置" />
+
+    <Button
+        android:id="@+id/btn_commit_info"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="提交信息"
-        android:id="@+id/btn_commit_info"
-        />
+        android:text="提交信息" />
 </LinearLayout>

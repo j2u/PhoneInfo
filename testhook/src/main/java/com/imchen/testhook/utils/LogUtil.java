@@ -8,7 +8,7 @@ import android.util.Log;
 
 public class LogUtil {
 
-    private static final String TAG="apkhook";
+    private static final String TAG="imchen";
     public LogUtil() {
     }
 

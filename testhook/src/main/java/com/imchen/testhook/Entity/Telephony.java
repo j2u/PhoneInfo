@@ -1,5 +1,9 @@
 package com.imchen.testhook.Entity;
 
+import android.telephony.CellInfo;
+
+import java.util.List;
+
 /**
  * Created by imchen on 2017/8/4.
  */
@@ -17,6 +21,8 @@ public class Telephony {
     private String SubscriberId;
     private String GroupIdLevel1;
     private String DeviceSvn;
+    private String VoiceMailNumber;
+    private List<CellInfo> allCellInfo;
 
     public Telephony( ) {
     }
@@ -107,5 +113,21 @@ public class Telephony {
 
     public void setDeviceSvn(String deviceSvn) {
         DeviceSvn = deviceSvn;
+    }
+
+    public List<CellInfo> getAllCellInfo() {
+        return allCellInfo;
+    }
+
+    public void setAllCellInfo(List<CellInfo> allCellInfo) {
+        this.allCellInfo = allCellInfo;
+    }
+
+    public String getVoiceMailNumber() {
+        return VoiceMailNumber;
+    }
+
+    public void setVoiceMailNumber(String voiceMailNumber) {
+        VoiceMailNumber = voiceMailNumber;
     }
 }

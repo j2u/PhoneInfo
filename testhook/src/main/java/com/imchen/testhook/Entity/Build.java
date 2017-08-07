@@ -195,4 +195,29 @@ public class Build {
     public void setVERSION(Version VERSION) {
         this.VERSION = VERSION;
     }
+
+    @Override
+    public String toString() {
+        return "BOARD='" + BOARD + "'\n" +
+                "BOOTLOADER='" + BOOTLOADER + "'\n" +
+                "CPU_ABI='" + CPU_ABI + "'\n" +
+                "CPU_ABI2='" + CPU_ABI2 + "'\n" +
+                "BRAND='" + BRAND + "'\n" +
+                "DEVICE='" + DEVICE + "'\n" +
+                "DISPLAY='" + DISPLAY + "'\n" +
+                "FINGERPRINT='" + FINGERPRINT + "'\n" +
+                "HARDWARE='" + HARDWARE + "'\n" +
+                "HOST='" + HOST + "'\n" +
+                "ID='" + ID + "'\n" +
+                "IS_DEBUGGABLE='" + IS_DEBUGGABLE + "'\n" +
+                "MANUFACTURRER='" + MANUFACTURRER + "'\n" +
+                "MODEL='" + MODEL + "'\n" +
+                "PRODUCT='" + PRODUCT + "'\n" +
+                "RADIO='" + RADIO + "'\n" +
+                "SERIAL='" + SERIAL + "'\n" +
+                "TAGS='" + TAGS + "'\n" +
+                "TIME=" + TIME +
+                "USER='" + USER + "'\n" +
+                "VERSION=" + VERSION ;
+    }
 }
