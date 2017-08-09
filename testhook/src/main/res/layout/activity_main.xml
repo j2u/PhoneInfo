@@ -12,7 +12,8 @@
 
     <ScrollView
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="wrap_content"
+        android:padding="5dp">
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -62,9 +63,9 @@
                 android:textColor="#262cd7" />
 
             <TextView
+                android:id="@+id/tv_telephone_info"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:id="@+id/tv_telephone_info"
                 android:hint="电话 info" />
 
             <TextView
@@ -74,9 +75,9 @@
                 android:textColor="#262cd7" />
 
             <TextView
+                android:id="@+id/tv_battery_info"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:id="@+id/tv_battery_info"
                 android:hint="电池 info" />
 
             <TextView
@@ -93,30 +94,81 @@
         </LinearLayout>
     </ScrollView>
 
-
-    <Button
-        android:id="@+id/btn_hello"
-        android:layout_width="wrap_content"
+    <LinearLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="蓝牙" />
+        android:orientation="vertical">
 
-    <Button
-        android:id="@+id/btc_wifi"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="wifi" />
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
 
-    <Button
-        android:id="@+id/btn_location"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="位置" />
+            <Button
+                android:id="@+id/btn_hello"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="0.25"
+                android:text="蓝牙" />
 
-    <Button
-        android:id="@+id/btn_properties"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="配置" />
+            <Button
+                android:id="@+id/btc_wifi"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="0.25"
+                android:text="wifi" />
+
+            <Button
+                android:id="@+id/btn_location"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="0.25"
+                android:text="位置" />
+
+            <Button
+                android:id="@+id/btn_properties"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="0.25"
+                android:text="配置" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <Button
+                android:id="@+id/btn_setting"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="0.25"
+                android:text="设置" />
+
+            <Button
+                android:id="@+id/btc_ifi"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="0.25"
+                android:text="wifi" />
+
+            <Button
+                android:id="@+id/btn_lcation"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="0.25"
+                android:text="位置" />
+
+            <Button
+                android:id="@+id/btn_poperties"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="0.25"
+                android:text="配置" />
+        </LinearLayout>
+
+    </LinearLayout>
+
 
     <Button
         android:id="@+id/btn_commit_info"

@@ -14,4 +14,11 @@ public class Codes {
     public void setBASE(Integer BASE) {
         this.BASE = BASE;
     }
+
+    @Override
+    public String toString() {
+        return "Codes{" +
+                "\nBASE=" + BASE +
+                '}';
+    }
 }

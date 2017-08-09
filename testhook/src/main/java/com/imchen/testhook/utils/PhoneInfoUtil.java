@@ -10,6 +10,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
+import android.location.Criteria;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
@@ -21,7 +22,10 @@ import android.os.BatteryManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
+import android.os.Handler;
+import android.os.Message;
 import android.os.StatFs;
+import android.provider.Settings;
 import android.support.v4.app.ActivityCompat;
 import android.telephony.CellInfo;
 import android.telephony.CellLocation;
@@ -46,6 +50,7 @@ import com.imchen.testhook.Entity.Display;
 import com.imchen.testhook.Entity.Telephony;
 import com.imchen.testhook.Entity.Version;
 import com.imchen.testhook.Entity.Wifi;
+import com.imchen.testhook.MainActivity;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -72,12 +77,28 @@ import static android.content.Context.TELEPHONY_SERVICE;
  * Created by imchen on 2017/8/2.
  */
 
+
 public class PhoneInfoUtil {
     private static Context context;
     private static int level;
     private static int scale;
     private static String locationProvider;
     private static Location location;
+
+    private static Handler mHandler = new Handler() {
+        @Override
+        public void handleMessage(Message msg) {
+            switch (msg.what) {
+                case 0x1:
+                    Location location = msg.getData().getParcelable("location");
+                    MainActivity.mLocationTv.setText("Latitude: " + location.getLatitude() + "\nLongitude: " + location.getLongitude() +
+                            "\nAccuracy: " + location.getAccuracy() + "\nAltitude: " + location.getAltitude() + "\nSpeed: " + location.getSpeed() +
+                            "\nTime: " + location.getTime());
+                    break;
+            }
+        }
+    };
+
 
     public PhoneInfoUtil(Context context) {
         this.context = context;
@@ -92,7 +113,7 @@ public class PhoneInfoUtil {
         getLocalIpAddress();
         getLocalIpAddress2();
 //        getLocation();
-        getLocationInfo();
+//        getLocationInfo();
         getPhoneState();
         getSDCardInfo();
         getSimCardInfo();
@@ -106,6 +127,8 @@ public class PhoneInfoUtil {
 //        batteryReciver();
         getBatteryInfo2();
         getHttpAgent();
+        getSystemSetting();
+        getLocation(context);
     }
 
     /**
@@ -369,6 +392,8 @@ public class PhoneInfoUtil {
         final com.imchen.testhook.Entity.Location myLocation = new com.imchen.testhook.Entity.Location();
         LocationManager locationManager = (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
         List<String> providers = locationManager.getProviders(true);
+        final Message message = new Message();
+        final Bundle bundle = new Bundle();
         try {
             if (providers.contains(LocationManager.GPS_PROVIDER)) {
                 //如果是GPS
@@ -409,6 +434,15 @@ public class PhoneInfoUtil {
 //                    makeUseOfNewLocation(location);
                     myLocation.setInitLatitude(location.getLatitude());
                     myLocation.setInitLongitude(location.getLongitude());
+                    myLocation.setAltitude(location.getAltitude());
+                    myLocation.setBearing(location.getBearing());
+                    myLocation.setAccuracy(location.getAccuracy());
+                    mHandler.post(new Runnable() {
+                        @Override
+                        public void run() {
+
+                        }
+                    });
                     LogUtil.log("getLocationInfo: \n lat:" + location.getLatitude() + "\n lot:" + location.getLongitude());
                 }
 
@@ -423,39 +457,110 @@ public class PhoneInfoUtil {
             };
 
 // Register the listener with the Location Manager to receive location updates
-            locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 0, 0, locationListener);
+            locationManager.requestLocationUpdates(locationProvider, 5000, 0, locationListener);
         } catch (Exception e) {
             e.printStackTrace();
         }
+        return myLocation;
+    }
 
+    public static com.imchen.testhook.Entity.Location getLocation(Context context) {
+        com.imchen.testhook.Entity.Location myLocation = null;
+        try {
+            myLocation = new com.imchen.testhook.Entity.Location();
+            LocationManager locationManager = (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
+            LocationListener myGPSListener = new LocationListener() {
+                public void onLocationChanged(Location location) {
+                    double latitude = location.getLatitude();
+                    double longitude = location.getLongitude();
+                    double atitude = location.getAltitude();
+                    long time = location.getTime();
+                    StringBuffer sBuffer = new StringBuffer();
+                    sBuffer.append("经度：" + longitude + "\n");
+                    sBuffer.append("维度：" + latitude + "\n");
+                    sBuffer.append("海拔：" + atitude + "\n");
+                    sBuffer.append("速度：" + location.getSpeed() + "\n");
+                    LogUtil.log("latitude:" + latitude);
+                    LogUtil.log("longitude" + longitude);
+                    LogUtil.log("atitude" + atitude);
+                    LogUtil.log("time" + time);
+                    LogUtil.log("location.getSpeed()=" + location.getSpeed());
+                    Bundle bundle = new Bundle();
+                    bundle.putParcelable("location", location);
+                    Message message = new Message();
+                    message.setData(bundle);
+                    message.what = 0x1;
+                    mHandler.sendMessage(message);
+                    //  Toast.makeText(thisContext, "latitude:"+latitude+ " longitude"+longitude+" location.getSpeed()="+location.getSpeed() , Toast.LENGTH_SHORT).show();
+                }
+
+                public void onStatusChanged(String provider, int status,
+                                            Bundle extras) {
+                    LogUtil.log("onStatusChanged provider=" + provider + " status=" + status);
+                }
+
+                public void onProviderEnabled(String provider) {
+                    LogUtil.log("onProviderEnabled provider=" + provider);
+                }
+
+                public void onProviderDisabled(String provider) {
+                    LogUtil.log("onProviderDisabled provider=" + provider);
+                }
+            };
+
+            Criteria criteria = new Criteria();
+            criteria.setAccuracy(Criteria.ACCURACY_COARSE);
+            criteria.setAltitudeRequired(false);
+            criteria.setCostAllowed(true);
+            criteria.setPowerRequirement(Criteria.POWER_HIGH);
+            String provider = locationManager.getBestProvider(criteria, true);
+            List<String> providers = locationManager.getProviders(criteria, true);
+            for (int i = 0; i < providers.size(); i++) {
+                LogUtil.log("providers[" + i + "]=" + providers.get(i));
+            }
+//            LogUtil.log("provider="+provider);
+            // �����û�ȡһ����ѵ�Provider
+            if (context.checkPermission(Manifest.permission.ACCESS_FINE_LOCATION, android.os.Process.myPid(), android.os.Process.myUid()) != PackageManager.PERMISSION_GRANTED) {
+                //Ȩ�޼��
+                LogUtil.log("Permission Denied!");
+                Toast.makeText(context, "Permission Denied!", Toast.LENGTH_SHORT).show();
+                return null;
+            }
+            locationManager.requestLocationUpdates(provider, 3000, 0, myGPSListener);
+
+            //   locationManager.removeUpdates(myGPSListener);
+        } catch (Exception e) {
+            e.printStackTrace();
+            LogUtil.log(e);
+        }
         return myLocation;
     }
 
 
-    private static LocationListener mLocationListener = new LocationListener() {
-        @Override
-        public void onLocationChanged(Location location) {
-            LogUtil.log("时间：" + location.getTime());
-            LogUtil.log("经度：" + location.getLongitude());
-            LogUtil.log("纬度：" + location.getLatitude());
-            LogUtil.log("海拔：" + location.getAltitude());
-        }
-
-        @Override
-        public void onStatusChanged(String provider, int status, Bundle extras) {
-            LogUtil.log("onStatusChanged: ");
-        }
-
-        @Override
-        public void onProviderEnabled(String provider) {
-            LogUtil.log("getLocation: lat:" + location.getLatitude() + " lot:" + location.getLongitude());
-        }
-
-        @Override
-        public void onProviderDisabled(String provider) {
-            LogUtil.log("onProviderDisabled: ");
-        }
-    };
+//    private static LocationListener mLocationListener = new LocationListener() {
+//        @Override
+//        public void onLocationChanged(Location location) {
+//            LogUtil.log("时间：" + location.getTime());
+//            LogUtil.log("经度：" + location.getLongitude());
+//            LogUtil.log("纬度：" + location.getLatitude());
+//            LogUtil.log("海拔：" + location.getAltitude());
+//        }
+//
+//        @Override
+//        public void onStatusChanged(String provider, int status, Bundle extras) {
+//            LogUtil.log("onStatusChanged: ");
+//        }
+//
+//        @Override
+//        public void onProviderEnabled(String provider) {
+//            LogUtil.log("getLocation: lat:" + location.getLatitude() + " lot:" + location.getLongitude());
+//        }
+//
+//        @Override
+//        public void onProviderDisabled(String provider) {
+//            LogUtil.log("onProviderDisabled: ");
+//        }
+//    };
 
 //    // 获取手机经纬度
 //    public void getLocation() {
@@ -979,6 +1084,10 @@ public class PhoneInfoUtil {
             codes.setBASE(Build.VERSION_CODES.BASE);
             version.setCODENAME(Build.VERSION.CODENAME);
             version.setCodes(codes);
+            version.setRELEASE(Build.VERSION.RELEASE);
+            version.setSDK(Build.VERSION.SDK);
+            version.setSDK_INT(Build.VERSION.SDK_INT);
+            version.setINCREMENTAL(Build.VERSION.INCREMENTAL);
             build.setVERSION(version);
         } catch (Exception e) {
             LogUtil.log("getBuildInfo: " + e);
@@ -1019,9 +1128,9 @@ public class PhoneInfoUtil {
         String VoiceMailNumber = telephoneManager.getVoiceMailNumber();
         String SubscriberId = telephoneManager.getSubscriberId();
         String Line1Number = telephoneManager.getLine1Number();
-        VoiceMailNumber=VoiceMailNumber==null?"unknown":VoiceMailNumber;
-        SubscriberId=SubscriberId==null?"unknown":SubscriberId;
-        Line1Number=Line1Number==null?"unknown":Line1Number;
+        VoiceMailNumber = VoiceMailNumber == null ? "unknown" : VoiceMailNumber;
+        SubscriberId = SubscriberId == null ? "unknown" : SubscriberId;
+        Line1Number = Line1Number == null ? "unknown" : Line1Number;
         String groupIdLevel1 = null;
         List<CellInfo> allCellInfo = null;
         telephony.setDeviceId(DeviceId);
@@ -1036,7 +1145,7 @@ public class PhoneInfoUtil {
         LogUtil.log("Line1Number: " + Line1Number);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
             groupIdLevel1 = telephoneManager.getGroupIdLevel1();
-            groupIdLevel1=groupIdLevel1==null?"unknown":groupIdLevel1;
+            groupIdLevel1 = groupIdLevel1 == null ? "unknown" : groupIdLevel1;
             telephony.setGroupIdLevel1(groupIdLevel1);
             LogUtil.log("groupIdLevel1: " + groupIdLevel1);
         }
@@ -1044,7 +1153,7 @@ public class PhoneInfoUtil {
             allCellInfo = telephoneManager.getAllCellInfo();
 //            allCellInfo=allCellInfo.equals(null)?"unknown":allCellInfo;
             telephony.setAllCellInfo(allCellInfo);
-            LogUtil.log("allCellInfo: " + telephoneManager.getAllCellInfo());
+//            LogUtil.log("allCellInfo: " + telephoneManager.getAllCellInfo());
         }
         return telephony;
     }
@@ -1155,6 +1264,13 @@ public class PhoneInfoUtil {
 //        String webkitUserAgent=System.getProperty()
         LogUtil.log("javaAgent: " + javaHttpAgent);
         LogUtil.log("webkitAgent: " + webKitAgent);
+    }
+
+    public static void getSystemSetting() {
+        String ariplaneMode = Settings.System.getString(context.getContentResolver(), Settings.System.AIRPLANE_MODE_ON);
+        String adbEnabled = Settings.System.getString(context.getContentResolver(), Settings.Global.ADB_ENABLED);
+        LogUtil.log("airplaneModeOn: " + ariplaneMode);
+        LogUtil.log("adbEnabled: " + adbEnabled);
     }
 
     // 显示信息对话框

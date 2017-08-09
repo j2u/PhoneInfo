@@ -217,7 +217,6 @@ public class Build {
                 "SERIAL='" + SERIAL + "'\n" +
                 "TAGS='" + TAGS + "'\n" +
                 "TIME=" + TIME +
-                "USER='" + USER + "'\n" +
-                "VERSION=" + VERSION ;
+                "USER='" + USER + "'\n" ;
     }
 }

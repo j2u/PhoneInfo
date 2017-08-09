@@ -7,7 +7,7 @@ package com.imchen.testhook.Entity;
 public class Version {
 
     private String CODENAME;
-    private String INCREAMENTAL;
+    private String INCREMENTAL;
     private String RELEASE;
     private String SDK;
     private Integer SDK_INT;
@@ -21,12 +21,12 @@ public class Version {
         this.CODENAME = CODENAME;
     }
 
-    public String getINCREAMENTAL() {
-        return INCREAMENTAL;
+    public String getINCREMENTAL() {
+        return INCREMENTAL;
     }
 
-    public void setINCREAMENTAL(String INCREAMENTAL) {
-        this.INCREAMENTAL = INCREAMENTAL;
+    public void setINCREMENTAL(String INCREMENTAL) {
+        this.INCREMENTAL = INCREMENTAL;
     }
 
     public String getRELEASE() {
@@ -59,5 +59,16 @@ public class Version {
 
     public void setCodes(Codes codes) {
         this.codes = codes;
+    }
+
+    @Override
+    public String toString() {
+        return "Version{\n" +
+                "CODENAME='" + CODENAME + '\'' +
+                "\nINCREMENTAL='" + INCREMENTAL + '\'' +
+                "\nRELEASE='" + RELEASE + '\'' +
+                "\nSDK='" + SDK + '\'' +
+                "\nSDK_INT=" + SDK_INT +
+                '}';
     }
 }
