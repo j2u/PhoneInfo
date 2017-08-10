@@ -1,6 +1,8 @@
 package com.imchen.testhook;
 
 import android.app.ProgressDialog;
+import android.content.Context;
+import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Looper;
@@ -29,6 +31,7 @@ public class MainActivity extends AppCompatActivity {
     private Button mOneKeyBtn;
     private Button mCommitBtn;
     private Button mSetteings;
+    private Button mUninstallBtn;
 
     private TextView mBluetoothTv;
     private TextView mWifiTv;
@@ -40,6 +43,7 @@ public class MainActivity extends AppCompatActivity {
     private ProgressDialog progressDialog;
     private PhoneInfoUtil phoneInfoUtil;
     private PhoneInfoService service;
+    private Context mContext;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -48,6 +52,7 @@ public class MainActivity extends AppCompatActivity {
         findViewInit();
         listenerInit();
         phoneInfoUtil = new PhoneInfoUtil(getApplicationContext());
+        mContext=getApplicationContext();
     }
 
     private void findViewInit() {
@@ -59,6 +64,7 @@ public class MainActivity extends AppCompatActivity {
         mOneKeyBtn = (Button) findViewById(R.id.btn_onekey);
         mCommitBtn = (Button) findViewById(R.id.btn_commit_info);
         mSetteings = (Button) findViewById(R.id.btn_setting);
+        mUninstallBtn= (Button) findViewById(R.id.btn_uninstall);
 
         mBluetoothTv = (TextView) findViewById(R.id.tv_bluetooth_info);
         mBatteryTv = (TextView) findViewById(R.id.tv_battery_info);
@@ -76,6 +82,7 @@ public class MainActivity extends AppCompatActivity {
 
         //获取settings
         mSetteings.setOnClickListener(settingListener);
+        mUninstallBtn.setOnClickListener(unInstallListener);
 //        mCommitBtn.setOnClickListener(commitOnClickListener);
     }
 
@@ -179,6 +186,15 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public void onClick(View v) {
             PhoneInfoUtil.getSystemSetting();
+        }
+    };
+
+    private View.OnClickListener unInstallListener=new View.OnClickListener() {
+        @Override
+        public void onClick(View v) {
+            Intent intent=new Intent();
+            intent.setClass(getApplicationContext(),ScrollingActivity.class);
+            startActivity(intent);
         }
     };
 }
