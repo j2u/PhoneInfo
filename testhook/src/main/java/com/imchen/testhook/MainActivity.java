@@ -17,6 +17,7 @@ import com.imchen.testhook.Entity.Build;
 import com.imchen.testhook.Entity.Telephony;
 import com.imchen.testhook.Entity.Wifi;
 import com.imchen.testhook.service.PhoneInfoService;
+import com.imchen.testhook.utils.ContextUtil;
 import com.imchen.testhook.utils.HttpUtil;
 import com.imchen.testhook.utils.LogUtil;
 import com.imchen.testhook.utils.PhoneInfoUtil;
@@ -48,6 +49,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        new ContextUtil();
         setContentView(R.layout.activity_main);
         findViewInit();
         listenerInit();

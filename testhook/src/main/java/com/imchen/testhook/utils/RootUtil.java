@@ -18,6 +18,7 @@ public class RootUtil {
             dos = new DataOutputStream(process.getOutputStream());
             dos.writeBytes(cmd + "\n");
             dos.writeBytes("exit\n");
+            dos.flush();
             process.waitFor();
         } catch (Exception e) {
             e.printStackTrace();

@@ -36,7 +36,7 @@ public class ScrollingActivity extends AppCompatActivity {
                 Snackbar.make(view, "Get all Application on your device!", Snackbar.LENGTH_LONG)
                         .setAction("Action", null).show();
                 getAllInstallPackage();
-                uninstallReflect("com.example.testapk");
+                uninstallReflect("com.zhuoyi.market");
             }
         });
     }
