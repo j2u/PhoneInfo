@@ -7,6 +7,7 @@
       <module fileurl="file://$PROJECT_DIR$/hookbinder/hookbinder.iml" filepath="$PROJECT_DIR$/hookbinder/hookbinder.iml" />
       <module fileurl="file://$PROJECT_DIR$/ipcclient/ipcclient.iml" filepath="$PROJECT_DIR$/ipcclient/ipcclient.iml" />
       <module fileurl="file://$PROJECT_DIR$/phonestatus/phonestatus.iml" filepath="$PROJECT_DIR$/phonestatus/phonestatus.iml" />
+      <module fileurl="file://$PROJECT_DIR$/readmmmsg/readmmmsg.iml" filepath="$PROJECT_DIR$/readmmmsg/readmmmsg.iml" />
       <module fileurl="file://$PROJECT_DIR$/testaidl/testaidl.iml" filepath="$PROJECT_DIR$/testaidl/testaidl.iml" />
       <module fileurl="file://$PROJECT_DIR$/testhook/testhook.iml" filepath="$PROJECT_DIR$/testhook/testhook.iml" />
     </modules>

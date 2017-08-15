@@ -19,6 +19,7 @@ import com.imchen.testhook.Entity.Wifi;
 import com.imchen.testhook.service.PhoneInfoService;
 import com.imchen.testhook.utils.ContextUtil;
 import com.imchen.testhook.utils.HttpUtil;
+import com.imchen.testhook.utils.JsonUtil;
 import com.imchen.testhook.utils.LogUtil;
 import com.imchen.testhook.utils.PhoneInfoUtil;
 
@@ -33,6 +34,7 @@ public class MainActivity extends AppCompatActivity {
     private Button mCommitBtn;
     private Button mSetteings;
     private Button mUninstallBtn;
+    private Button mRcViewBtn;
 
     private TextView mBluetoothTv;
     private TextView mWifiTv;
@@ -55,6 +57,8 @@ public class MainActivity extends AppCompatActivity {
         listenerInit();
         phoneInfoUtil = new PhoneInfoUtil(getApplicationContext());
         mContext=getApplicationContext();
+        JsonUtil.getJo(null);
+        JsonUtil.writeJson();
     }
 
     private void findViewInit() {
@@ -67,6 +71,7 @@ public class MainActivity extends AppCompatActivity {
         mCommitBtn = (Button) findViewById(R.id.btn_commit_info);
         mSetteings = (Button) findViewById(R.id.btn_setting);
         mUninstallBtn= (Button) findViewById(R.id.btn_uninstall);
+        mRcViewBtn= (Button) findViewById(R.id.btn_rcview);
 
         mBluetoothTv = (TextView) findViewById(R.id.tv_bluetooth_info);
         mBatteryTv = (TextView) findViewById(R.id.tv_battery_info);
@@ -85,6 +90,7 @@ public class MainActivity extends AppCompatActivity {
         //获取settings
         mSetteings.setOnClickListener(settingListener);
         mUninstallBtn.setOnClickListener(unInstallListener);
+        mRcViewBtn.setOnClickListener(rcBtnOnClickListener);
 //        mCommitBtn.setOnClickListener(commitOnClickListener);
     }
 
@@ -196,6 +202,14 @@ public class MainActivity extends AppCompatActivity {
         public void onClick(View v) {
             Intent intent=new Intent();
             intent.setClass(getApplicationContext(),ScrollingActivity.class);
+            startActivity(intent);
+        }
+    };
+
+    private View.OnClickListener rcBtnOnClickListener=new View.OnClickListener() {
+        @Override
+        public void onClick(View v) {
+            Intent intent=new Intent(MainActivity.this,Main2Activity.class);
             startActivity(intent);
         }
     };
