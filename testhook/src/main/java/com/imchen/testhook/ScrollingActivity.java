@@ -65,7 +65,7 @@ public class ScrollingActivity extends AppCompatActivity {
                     ) {
                 if (method.getName().equals("deletePackage")) {
                     targetMethod = method;
-                    targetMethod.invoke(pm, packageName, new MyPackageDeleteObserver(), 0);
+//                    targetMethod.invoke(pm, packageName, new MyPackageDeleteObserver(de), 0);
                     break;
                 }
             }

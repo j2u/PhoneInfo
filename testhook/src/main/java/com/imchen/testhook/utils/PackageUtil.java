@@ -1,6 +1,7 @@
 package com.imchen.testhook.utils;
 
 import android.content.Context;
+import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 
@@ -15,16 +16,14 @@ import java.util.List;
 
 public class PackageUtil {
 
-    private static Context mContext;
     private static List<PackageInfo> packageInfoList;
 
-    public PackageUtil(Context context) {
-        this.mContext = context;
+    public PackageUtil() {
     }
 
-    public static List<PackageInfo> getAllInstallPackage() {
+    public static List<PackageInfo> getAllInstallPackage(Context context) {
         StringBuffer strbuff = new StringBuffer();
-        PackageManager pm = mContext.getPackageManager();
+        PackageManager pm = context.getPackageManager();
         packageInfoList = pm.getInstalledPackages(0);
         for (PackageInfo info : packageInfoList
                 ) {
@@ -35,9 +34,23 @@ public class PackageUtil {
         return packageInfoList;
     }
 
-    public static void uninstallReflect(String packageName) {
+    public static String getApplicationName(Context context, String packageName) {
+        PackageManager pm = context.getPackageManager();
+        ApplicationInfo appInfo;
+        String appName=null;
+        try {
+            appInfo = pm.getApplicationInfo(packageName, 0);
+            appName= (String) pm.getApplicationLabel(appInfo);
+        } catch (PackageManager.NameNotFoundException e) {
+            e.printStackTrace();
+        }
+        return appName;
+    }
+
+
+    public static void uninstallReflect( Context context, String packageName,MyPackageDeleteObserver.OnDeleteListener onDeleteListener) {
         Method targetMethod = null;
-        PackageManager pm = mContext.getPackageManager();
+        PackageManager pm = context.getPackageManager();
 
         try {
 //            Class IPackageDeleteObserverCls = Class.forName("android.content.pm.IPackageDeleteObserver");
@@ -46,12 +59,13 @@ public class PackageUtil {
                     ) {
                 if (method.getName().equals("deletePackage")) {
                     targetMethod = method;
-                    targetMethod.invoke(pm, packageName, new MyPackageDeleteObserver(), 0);
+                    targetMethod.invoke(pm, packageName, new MyPackageDeleteObserver(onDeleteListener), 0);
                     break;
                 }
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
+
     }
 }

@@ -18,22 +18,36 @@ import java.lang.reflect.Method;
  */
 
 public class MyPackageDeleteObserver extends IPackageDeleteObserver.Stub {
+
+    private OnDeleteListener deleteListener;
+
+    public MyPackageDeleteObserver(OnDeleteListener listener) {
+        deleteListener=listener;
+    }
+
+    public interface OnDeleteListener{
+        void success(int returnCode);
+        void fail(int returnCode);
+    }
+
     @Override
     public void packageDeleted(String packageName, int returnCode) throws RemoteException {
 //        getCodePath();
         Context context=ContextUtil.getContext();
         if (returnCode == 1) {
             LogUtil.log("Delete：" + packageName + " Success！" + returnCode);
+            if (deleteListener!=null){
+                deleteListener.success(returnCode);
+            }
         } else {
             LogUtil.log("Delete：" + packageName + " Fail！" + returnCode);
-//            Looper.prepare();
-//            Toast.makeText(context,"Delete "+packageName+" Fail!",Toast.LENGTH_SHORT).show();
-//            Looper.loop();
             if (RootUtil.replyRootPermission(context.getPackageCodePath())) {
                 LogUtil.log("retry to delete package!");
-//                packageDeleted(packageName, returnCode);
             }else {
                 LogUtil.log("can not apply permission!");
+            }
+            if (deleteListener!=null){
+                deleteListener.fail(returnCode);
             }
         }
     }
