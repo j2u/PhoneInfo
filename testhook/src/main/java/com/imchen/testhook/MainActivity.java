@@ -1,15 +1,20 @@
 package com.imchen.testhook;
 
 import android.app.ProgressDialog;
+import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.os.AsyncTask;
+import android.os.Binder;
 import android.os.Bundle;
 import android.os.Looper;
+import android.os.UserHandle;
+import android.provider.Settings;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.imchen.testhook.Entity.Battery;
 import com.imchen.testhook.Entity.Bluetooth;
@@ -23,7 +28,7 @@ import com.imchen.testhook.utils.JsonUtil;
 import com.imchen.testhook.utils.LogUtil;
 import com.imchen.testhook.utils.PhoneInfoUtil;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements View.OnClickListener{
 
     private static final String TAG = "imchen";
     private Button mHelloBtn;
@@ -32,9 +37,10 @@ public class MainActivity extends AppCompatActivity {
     private Button mPropertiesBtn;
     private Button mOneKeyBtn;
     private Button mCommitBtn;
-    private Button mSetteings;
     private Button mUninstallBtn;
     private Button mRcViewBtn;
+    private Button mInstallBtn;
+    private Button mAirPlaneBtn;
 
     private TextView mBluetoothTv;
     private TextView mWifiTv;
@@ -59,6 +65,7 @@ public class MainActivity extends AppCompatActivity {
         mContext=getApplicationContext();
         JsonUtil.getJo(null);
         JsonUtil.writeJson();
+        LogUtil.log("calling uid: "+Binder.getCallingUid());
     }
 
     private void findViewInit() {
@@ -69,9 +76,10 @@ public class MainActivity extends AppCompatActivity {
         mPropertiesBtn = (Button) findViewById(R.id.btn_properties);
         mOneKeyBtn = (Button) findViewById(R.id.btn_onekey);
         mCommitBtn = (Button) findViewById(R.id.btn_commit_info);
-        mSetteings = (Button) findViewById(R.id.btn_setting);
         mUninstallBtn= (Button) findViewById(R.id.btn_uninstall);
         mRcViewBtn= (Button) findViewById(R.id.btn_rcview);
+        mInstallBtn= (Button) findViewById(R.id.btn_install);
+        mAirPlaneBtn= (Button) findViewById(R.id.btn_airplane);
 
         mBluetoothTv = (TextView) findViewById(R.id.tv_bluetooth_info);
         mBatteryTv = (TextView) findViewById(R.id.tv_battery_info);
@@ -88,9 +96,10 @@ public class MainActivity extends AppCompatActivity {
         mOneKeyBtn.setOnClickListener(commitOnClickListener);
 
         //获取settings
-        mSetteings.setOnClickListener(settingListener);
         mUninstallBtn.setOnClickListener(unInstallListener);
         mRcViewBtn.setOnClickListener(rcBtnOnClickListener);
+        mInstallBtn.setOnClickListener(this);
+        mAirPlaneBtn.setOnClickListener(this);
 //        mCommitBtn.setOnClickListener(commitOnClickListener);
     }
 
@@ -145,6 +154,24 @@ public class MainActivity extends AppCompatActivity {
             Looper.loop();
         }
     };
+
+    @Override
+    public void onClick(View v) {
+        switch (v.getId()){
+            case R.id.btn_install:
+                Intent intent=new Intent(MainActivity.this,InstallActivity.class);
+                startActivity(intent);
+                break;
+            case R.id.btn_airplane:
+                ContentResolver resolver=mContext.getContentResolver();
+                Settings.System.putInt(resolver,Settings.System.AIRPLANE_MODE_ON,1);
+                Intent intent1=new Intent(Intent.ACTION_AIRPLANE_MODE_CHANGED);
+                intent1.putExtra("status",true);
+                mContext.sendBroadcast(intent1);
+            default:
+                break;
+        }
+    }
 
     private class updateViewTask extends AsyncTask {
 
@@ -209,8 +236,15 @@ public class MainActivity extends AppCompatActivity {
     private View.OnClickListener rcBtnOnClickListener=new View.OnClickListener() {
         @Override
         public void onClick(View v) {
-            Intent intent=new Intent(MainActivity.this,Main2Activity.class);
+            Intent intent=new Intent(MainActivity.this,PackageActivity.class);
             startActivity(intent);
+        }
+    };
+
+    private View.OnClickListener installBtnListener=new View.OnClickListener() {
+        @Override
+        public void onClick(View v) {
+//            Intent
         }
     };
 }

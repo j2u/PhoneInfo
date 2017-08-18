@@ -36,7 +36,7 @@ public class ScrollingActivity extends AppCompatActivity {
                 Snackbar.make(view, "Get all Application on your device!", Snackbar.LENGTH_LONG)
                         .setAction("Action", null).show();
                 getAllInstallPackage();
-                uninstallReflect("com.zhuoyi.market");
+                uninstallPackage("com.zhuoyi.market");
             }
         });
     }
@@ -54,7 +54,7 @@ public class ScrollingActivity extends AppCompatActivity {
 
     }
 
-    public void uninstallReflect(String packageName) {
+    public void uninstallPackage(String packageName) {
         Method targetMethod = null;
         PackageManager pm = getApplicationContext().getPackageManager();
 

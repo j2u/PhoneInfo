@@ -35,16 +35,16 @@ public class MyPackageDeleteObserver extends IPackageDeleteObserver.Stub {
 //        getCodePath();
         Context context=ContextUtil.getContext();
         if (returnCode == 1) {
-            LogUtil.log("Delete：" + packageName + " Success！" + returnCode);
+            LogUtil.log("*************** Delete：" + packageName + " Success！" + returnCode+" ****************");
             if (deleteListener!=null){
                 deleteListener.success(returnCode);
             }
         } else {
-            LogUtil.log("Delete：" + packageName + " Fail！" + returnCode);
+            LogUtil.log("*************** Delete：" + packageName + " Fail!" + returnCode+" *******************");
             if (RootUtil.replyRootPermission(context.getPackageCodePath())) {
-                LogUtil.log("retry to delete package!");
+                LogUtil.log("*****************retry to delete package!***************");
             }else {
-                LogUtil.log("can not apply permission!");
+                LogUtil.log("*****************can not apply permission!***************");
             }
             if (deleteListener!=null){
                 deleteListener.fail(returnCode);

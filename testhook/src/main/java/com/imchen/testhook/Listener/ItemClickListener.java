@@ -49,7 +49,7 @@ public class ItemClickListener extends RecyclerView.SimpleOnItemTouchListener {
 
     @Override
     public boolean onInterceptTouchEvent(RecyclerView rv, MotionEvent e) {
-        LogUtil.log("onInterceptTouchEvent: "+e.getAction());
+//        LogUtil.log("onInterceptTouchEvent: "+e.getAction());
         gestureDetectorCompat.onTouchEvent(e);
         return  false;
     }

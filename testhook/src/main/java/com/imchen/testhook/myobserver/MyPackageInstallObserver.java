@@ -11,12 +11,31 @@ import com.imchen.testhook.utils.LogUtil;
  */
 
 public class MyPackageInstallObserver extends IPackageInstallObserver.Stub {
+
+    private OnInstallListener mOnInstallListener;
+
+    public interface OnInstallListener {
+        void success(int returnCode);
+
+        void fail(int returnCode);
+    }
+
+    public MyPackageInstallObserver(OnInstallListener listener) {
+        this.mOnInstallListener = listener;
+    }
+
     @Override
     public void packageInstalled(String packageName, int returnCode) throws RemoteException {
         if (returnCode == 1) {
-            LogUtil.log("安装：" + packageName + " 成功！" + returnCode);
+            LogUtil.log("Install ********************" + packageName + "*************** success!" + returnCode);
+            if (mOnInstallListener != null) {
+                mOnInstallListener.success(returnCode);
+            }
         } else {
-            LogUtil.log("安装：" + packageName + " 失败！" + returnCode);
+            LogUtil.log("Install ********************" + packageName + "*************** fail!" + returnCode);
+            if (mOnInstallListener != null) {
+                mOnInstallListener.fail(returnCode);
+            }
         }
     }
 }

@@ -8,6 +8,7 @@ import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.IBinder;
+import android.os.Process;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -38,6 +39,7 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         getLocation();
         getSCache();
+        Log.d(TAG, "onCreate: uid"+ Process.myUid());
     }
 
     public void getLocation() {

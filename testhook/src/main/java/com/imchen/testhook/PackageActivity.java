@@ -1,12 +1,15 @@
 package com.imchen.testhook;
 
 import android.app.AlertDialog;
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.pm.PackageInfo;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.os.Looper;
+import android.os.Handler;
+import android.os.Message;
+import android.os.Process;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
@@ -20,11 +23,12 @@ import android.widget.Toast;
 import com.imchen.testhook.Listener.ItemClickListener;
 import com.imchen.testhook.adapter.MyRecyclerViewAdapter;
 import com.imchen.testhook.myobserver.MyPackageDeleteObserver;
+import com.imchen.testhook.utils.LogUtil;
 import com.imchen.testhook.utils.PackageUtil;
 
 import java.util.List;
 
-public class Main2Activity extends AppCompatActivity {
+public class PackageActivity extends AppCompatActivity implements View.OnClickListener{
 
     private RecyclerView mRecyclerView;
     private LinearLayoutManager mLinearLayoutManager;
@@ -34,6 +38,26 @@ public class Main2Activity extends AppCompatActivity {
     private Context mContext;
 
     private int curIndex;
+
+    private final static int DELETE_PACKAGE_SUCCESS = 1;
+    private final static int DELETE_PACKAGE_FAIL = -1;
+
+    private Handler mHandler = new Handler() {
+        @Override
+        public void handleMessage(Message msg) {
+            switch (msg.what) {
+                case DELETE_PACKAGE_SUCCESS:
+                    mMyRecyclerViewAdapter.notifyItemChanged(curIndex);
+                    hintDialog("Warning!", "Delete Application " + appName + " Success ", "OK");
+                    break;
+                case DELETE_PACKAGE_FAIL:
+                    hintDialog("Warning!", "Delete Application " + appName + " Fail , Please Try Again! ResultCode:" + DELETE_PACKAGE_FAIL, "OK");
+                    break;
+                default:
+                    break;
+            }
+        }
+    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -62,13 +86,10 @@ public class Main2Activity extends AppCompatActivity {
         mMyRecyclerViewAdapter = new MyRecyclerViewAdapter(packageInfoList);
         mRecyclerView.setAdapter(mMyRecyclerViewAdapter);
 
-
         DefaultItemAnimator defaultItemAnimator = new DefaultItemAnimator();
         defaultItemAnimator.setAddDuration(1000);
         defaultItemAnimator.setMoveDuration(1000);
         mRecyclerView.setItemAnimator(defaultItemAnimator);
-
-
         mRecyclerView.addOnItemTouchListener(new ItemClickListener(mRecyclerView, new ItemClickListener.OnItemClickListener() {
             @Override
             public void onItemClick(View view, int position) {
@@ -80,14 +101,7 @@ public class Main2Activity extends AppCompatActivity {
 //                Toast.makeText(getApplicationContext(), "long click", Toast.LENGTH_SHORT).show();
                 appName = PackageUtil.getApplicationName(mContext, packageInfoList.get(position).packageName);
                 curIndex = position;
-                AlertDialog.Builder builder = new AlertDialog.Builder(Main2Activity.this);
-                builder.setTitle("Warning!");
-                builder.setIcon(R.mipmap.ic_launcher_round);
-                builder.setMessage("Are you want to remove " + appName);
-                builder.setNegativeButton("cancel", cancelListener);
-                builder.setPositiveButton("confirm", confirmListener);
-                builder.create();
-                builder.show();
+                hintDialog("Warning!","Are you want to remove "+appName,"Confirm","Cancel",confirmListener,cancelListener);
             }
         }));
     }
@@ -102,44 +116,66 @@ public class Main2Activity extends AppCompatActivity {
     public DialogInterface.OnClickListener confirmListener = new DialogInterface.OnClickListener() {
         @Override
         public void onClick(DialogInterface dialog, int which) {
-            PackageUtil.uninstallReflect(mContext, packageInfoList.get(curIndex).packageName, new MyPackageDeleteObserver.OnDeleteListener() {
+            final ProgressDialog progressDialog = new ProgressDialog(PackageActivity.this);
+            progressDialog.setMessage("Please wait......");
+            progressDialog.show();
+            LogUtil.log("myUid:---"+Process.myUid());
+            PackageUtil.uninstallPackage(mContext, packageInfoList.get(curIndex).packageName, new MyPackageDeleteObserver.OnDeleteListener() {
                 @Override
                 public void success(int returnCode) {
-                    mMyRecyclerViewAdapter.notifyItemChanged(curIndex);
-//                    new myHintDialogTask().execute(hintDialog("Warning!","Delete Application "+appName+" Success!","OK"));
-                    hintDialog("Warning!","Delete Application "+appName+" Success , Please Try Again!","OK");
+                    Message msg = new Message();
+                    msg.what = returnCode;
+                    mHandler.sendMessage(msg);
+                    progressDialog.cancel();
                 }
 
                 @Override
                 public void fail(int returnCode) {
-                    hintDialog("Warning!","Delete Application "+appName+" Fail , Please Try Again!","OK");
-//                    new myHintDialogTask().execute(hintDialog("Warning!","Delete Application "+appName+" Fail , Please Try Again!","OK"));
+                    Message msg = new Message();
+                    msg.what = returnCode;
+                    mHandler.sendMessage(msg);
+                    progressDialog.cancel();
                 }
             });
         }
     };
 
-    public class myHintDialogTask extends AsyncTask{
+    @Override
+    public void onClick(View v) {
+
+    }
+
+    public class myHintDialogTask extends AsyncTask {
 
         @Override
         protected Object doInBackground(Object[] params) {
-            AlertDialog.Builder builder= (AlertDialog.Builder) params[0];
-            builder.create();
-            builder.show();
+            mMyRecyclerViewAdapter.notifyItemChanged(curIndex);
             return null;
         }
     }
 
-    public AlertDialog.Builder hintDialog(String title,String message,String btnName){
-        AlertDialog.Builder builder=new AlertDialog.Builder(Main2Activity.this);
-        builder.setMessage(message);
-        builder.setNegativeButton(btnName,null);
+    public void hintDialog(String title, String message, String btnName) {
+        hintDialog(title, message, btnName, null, null, null);
+    }
+
+    public void hintDialog(String title, String message, String confirmButtonName, String cancelButtonName,
+                           DialogInterface.OnClickListener mConfListener, DialogInterface.OnClickListener mCancListener) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(PackageActivity.this);
         builder.setTitle(title);
         builder.setIcon(R.mipmap.ic_launcher_round);
-        Looper.prepare();
+        builder.setMessage(message);
+        if (mConfListener != null) {
+            builder.setNegativeButton(confirmButtonName==null?"Cancel":cancelButtonName, cancelListener);
+        }
+        if (mCancListener != null) {
+            builder.setPositiveButton(confirmButtonName==null?"Confirm":confirmButtonName, confirmListener);
+        }
+        if (mCancListener==null&&confirmButtonName!=null){
+            builder.setNegativeButton(confirmButtonName,null);
+        }
         builder.create();
         builder.show();
-        return builder;
     }
+
 
 }
