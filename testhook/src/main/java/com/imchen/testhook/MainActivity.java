@@ -8,21 +8,21 @@ import android.os.AsyncTask;
 import android.os.Binder;
 import android.os.Bundle;
 import android.os.Looper;
-import android.os.UserHandle;
 import android.provider.Settings;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.imchen.testhook.Entity.Battery;
 import com.imchen.testhook.Entity.Bluetooth;
 import com.imchen.testhook.Entity.Build;
 import com.imchen.testhook.Entity.Telephony;
 import com.imchen.testhook.Entity.Wifi;
+import com.imchen.testhook.View.FloatView;
 import com.imchen.testhook.service.PhoneInfoService;
 import com.imchen.testhook.utils.ContextUtil;
+import com.imchen.testhook.utils.FloatViewUtil;
 import com.imchen.testhook.utils.HttpUtil;
 import com.imchen.testhook.utils.JsonUtil;
 import com.imchen.testhook.utils.LogUtil;
@@ -66,6 +66,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         JsonUtil.getJo(null);
         JsonUtil.writeJson();
         LogUtil.log("calling uid: "+Binder.getCallingUid());
+        LogUtil.log("Model: "+ android.os.Build.MODEL);
+        LogUtil.log("Manufacture:"+ android.os.Build.MANUFACTURER);
+        FloatViewUtil.addFloatView(mContext,new FloatView(mContext));
     }
 
     private void findViewInit() {

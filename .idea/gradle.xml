@@ -15,6 +15,7 @@
             <option value="$PROJECT_DIR$/readmmmsg" />
             <option value="$PROJECT_DIR$/testaidl" />
             <option value="$PROJECT_DIR$/testhook" />
+            <option value="$PROJECT_DIR$/viewfinder" />
           </set>
         </option>
         <option name="resolveModulePerSourceSet" value="false" />

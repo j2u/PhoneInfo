@@ -10,6 +10,7 @@
       <module fileurl="file://$PROJECT_DIR$/readmmmsg/readmmmsg.iml" filepath="$PROJECT_DIR$/readmmmsg/readmmmsg.iml" />
       <module fileurl="file://$PROJECT_DIR$/testaidl/testaidl.iml" filepath="$PROJECT_DIR$/testaidl/testaidl.iml" />
       <module fileurl="file://$PROJECT_DIR$/testhook/testhook.iml" filepath="$PROJECT_DIR$/testhook/testhook.iml" />
+      <module fileurl="file://$PROJECT_DIR$/viewfinder/viewfinder.iml" filepath="$PROJECT_DIR$/viewfinder/viewfinder.iml" />
     </modules>
   </component>
 </project>
