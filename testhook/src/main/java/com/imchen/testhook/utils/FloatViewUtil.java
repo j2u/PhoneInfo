@@ -17,13 +17,13 @@ import com.imchen.testhook.R;
 public class FloatViewUtil {
 
     private static WindowManager mWindowManager;
-    private static LinearLayout mLinearLayout;
+    public static LinearLayout mLinearLayout;
 
     public FloatViewUtil() {
 
     }
 
-    public static boolean addFloatView(Context context, View floatView) {
+    public static boolean addFloatView(Context context) {
         getWindowManager(context);
         WindowManager.LayoutParams layoutParams = new WindowManager.LayoutParams();
         layoutParams.type = WindowManager.LayoutParams.TYPE_SYSTEM_ALERT;
@@ -34,7 +34,6 @@ public class FloatViewUtil {
         layoutParams.gravity = Gravity.START | Gravity.TOP;
         layoutParams.flags = WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE;
         layoutParams.format = PixelFormat.RGBA_8888;
-        floatView.setLayoutParams(layoutParams);
         LayoutInflater inflater = LayoutInflater.from(context);
         mLinearLayout = (LinearLayout) inflater.inflate(R.layout.floatview_content, null);
         mWindowManager.addView(mLinearLayout, layoutParams);
