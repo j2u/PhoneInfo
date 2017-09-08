@@ -516,9 +516,11 @@ public class Script {
 				LogUtil.log(sHeader
 						+ " "
 						+ v.toString()
-						+ " "
+						+ " HexID:"
 						+ Integer.toHexString(v.getId())
-						+ " "
+						+ " ID:"
+						+v.getId()
+						+" "
 						+ v.getLeft()
 						+ " "
 						+ v.getTop()

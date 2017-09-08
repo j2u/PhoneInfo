@@ -177,11 +177,11 @@
                 android:layout_weight="0.25"
                 android:text="service" />
             <Button
-                android:id="@+id/btn_sun"
+                android:id="@+id/btn_startScript"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_weight="0.25"
-                android:text="notuse" />
+                android:text="script" />
         </LinearLayout>
 
     </LinearLayout>
@@ -192,4 +192,5 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="提交信息" />
+
 </LinearLayout>

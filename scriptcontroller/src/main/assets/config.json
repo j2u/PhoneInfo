@@ -1,0 +1,10 @@
+{
+  "config": [
+    {
+      "mainServerUrl":"www.google.com",
+      "installApkUrl": "www.google.com",
+      "scriptApkUrl": "www.google.com",
+      "version": "0.0.1"
+    }
+  ]
+}

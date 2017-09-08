@@ -1,18 +1,25 @@
 package com.imchen.testhook;
 
+import android.app.Activity;
 import android.app.ProgressDialog;
+import android.content.ComponentName;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.ServiceConnection;
 import android.os.AsyncTask;
 import android.os.Binder;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.IBinder;
 import android.os.Looper;
 import android.os.Message;
 import android.provider.Settings;
+import android.support.v4.app.FragmentActivity;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
+import android.view.inputmethod.InputMethod;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.TextView;
 
@@ -28,8 +35,14 @@ import com.imchen.testhook.utils.FloatViewUtil;
 import com.imchen.testhook.utils.HttpUtil;
 import com.imchen.testhook.utils.JsonUtil;
 import com.imchen.testhook.utils.LogUtil;
+import com.imchen.testhook.utils.MyScriptUtil;
 import com.imchen.testhook.utils.PhoneInfoUtil;
+import com.myrom.aidl.IScriptManager;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
+@SuppressWarnings("WrongConstant")
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
 
     private static final String TAG = "imchen";
@@ -38,7 +51,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private Button mLocationBtn;
     private Button mPropertiesBtn;
     private Button mOneKeyBtn;
-    private Button mCommitBtn;
+    private Button mStartScriptBtn;
     private Button mUninstallBtn;
     private Button mRcViewBtn;
     private Button mInstallBtn;
@@ -86,18 +99,23 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         new ContextUtil();
         mContext = getApplicationContext();
         setContentView(R.layout.activity_main);
+        FragmentActivity fa=new FragmentActivity();
+        boolean b=(Object)fa instanceof Activity;
+        LogUtil.log(fa.toString()+" instance of :"+b);
 //        FloatViewUtil.addFloatView(mContext);
         findViewInit();
         listenerInit();
         phoneInfoUtil = new PhoneInfoUtil(getApplicationContext());
         JsonUtil.getJo(null);
         JsonUtil.writeJson();
-        LogUtil.log("calling uid: " + Binder.getCallingUid());
-        LogUtil.log("Model: " + android.os.Build.MODEL);
-        LogUtil.log("Manufacture:" + android.os.Build.MANUFACTURER);
+//        LogUtil.log("calling uid: " + Binder.getCallingUid());
+//        LogUtil.log("Model: " + android.os.Build.MODEL);
+//        LogUtil.log("Manufacture:" + android.os.Build.MANUFACTURER);
 
         Intent intent = new Intent(MainActivity.this, ReadViewService.class);
         startService(intent);
+
+
     }
 
     private void findViewInit() {
@@ -107,7 +125,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         mPropertiesBtn = (Button) findViewById(R.id.btn_properties);
         mPropertiesBtn = (Button) findViewById(R.id.btn_properties);
         mOneKeyBtn = (Button) findViewById(R.id.btn_onekey);
-        mCommitBtn = (Button) findViewById(R.id.btn_commit_info);
+        mStartScriptBtn = (Button) findViewById(R.id.btn_startScript);
         mUninstallBtn = (Button) findViewById(R.id.btn_uninstall);
         mRcViewBtn = (Button) findViewById(R.id.btn_rcview);
         mInstallBtn = (Button) findViewById(R.id.btn_install);
@@ -135,6 +153,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         mInstallBtn.setOnClickListener(this);
         mAirPlaneBtn.setOnClickListener(this);
         mServiceBtn.setOnClickListener(this);
+        mStartScriptBtn.setOnClickListener(this);
 //        mCommitBtn.setOnClickListener(commitOnClickListener);
     }
 
@@ -206,6 +225,26 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             case R.id.btn_service:
                 Intent intent2 = new Intent(MainActivity.this, StartscriptActivity.class);
                 startActivity(intent2);
+                break;
+            case R.id.btn_startScript:
+                JSONObject jsonObject =new JSONObject();
+                try {
+                    Intent scriptIntent=new Intent("com.myrom.mm.script");
+                    scriptIntent.setPackage("com.tencent.mm");
+                    bindService(scriptIntent, new ServiceConnection() {
+                        @Override
+                        public void onServiceConnected(ComponentName name, IBinder service) {
+                            LogUtil.log("connected success! "+name);
+                        }
+
+                        @Override
+                        public void onServiceDisconnected(ComponentName name) {
+                            LogUtil.log("disconnected!!!"+ name);
+                        }
+                    },Context.BIND_AUTO_CREATE);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
                 break;
             default:
                 break;

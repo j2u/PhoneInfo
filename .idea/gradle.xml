@@ -13,6 +13,8 @@
             <option value="$PROJECT_DIR$/ipcclient" />
             <option value="$PROJECT_DIR$/phonestatus" />
             <option value="$PROJECT_DIR$/readmmmsg" />
+            <option value="$PROJECT_DIR$/scriptcontroller" />
+            <option value="$PROJECT_DIR$/socketserver" />
             <option value="$PROJECT_DIR$/testaidl" />
             <option value="$PROJECT_DIR$/testhook" />
             <option value="$PROJECT_DIR$/viewfinder" />

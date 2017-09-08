@@ -2,16 +2,11 @@ package com.imchen.testhook.myobserver;
 
 import android.content.Context;
 import android.content.pm.IPackageDeleteObserver;
-import android.os.Looper;
 import android.os.RemoteException;
-import android.widget.Toast;
 
 import com.imchen.testhook.utils.ContextUtil;
 import com.imchen.testhook.utils.LogUtil;
 import com.imchen.testhook.utils.RootUtil;
-
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
 
 /**
  * Created by imchen on 2017/8/10.

@@ -1,1 +1,1 @@
-include ':app', ':testaidl', ':ipcclient', ':phonestatus', ':hookbinder', ':testhook', ':readmmmsg', ':viewfinder'
+include ':app', ':testaidl', ':ipcclient', ':phonestatus', ':hookbinder', ':testhook', ':readmmmsg', ':viewfinder', ':socketserver', ':scriptcontroller'

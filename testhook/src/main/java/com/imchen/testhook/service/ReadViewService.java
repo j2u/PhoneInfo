@@ -39,12 +39,12 @@ public class ReadViewService extends Service {
             public void run() {
 //                List<ActivityManager.RunningTaskInfo> infoList = getRunningTask(getApplicationContext());
                 Activity activity=DumpViewUtil.getCurrentActivity();
-//                ViewGroup viewGroup= (ViewGroup) activity.getWindow().getDecorView().findViewById(android.R.id.content);
-////                ViewGroup mRootView= (ViewGroup) viewGroup.getChildAt(0);
-//                for (int i=0;i<viewGroup.getChildCount();i++){
-//                    View view= viewGroup.getChildAt(i);
-//                    LogUtil.log("view: id: "+view.getId()+" view: "+view.toString()+" act: "+activity.toString());
-//                }
+                ViewGroup viewGroup= (ViewGroup) activity.getWindow().getDecorView().findViewById(android.R.id.content);
+//                ViewGroup mRootView= (ViewGroup) viewGroup.getChildAt(0);
+                for (int i=0;i<viewGroup.getChildCount();i++){
+                    View view= viewGroup.getChildAt(i);
+                    LogUtil.log("view: id: "+view.getId()+"HexID:"+Integer.toHexString(view.getId())+" view: "+view.toString()+" act: "+activity.toString());
+                }
 //
 //                for (ActivityManager.RunningTaskInfo info : infoList
 //                        ) {
@@ -57,7 +57,7 @@ public class ReadViewService extends Service {
 //                    }
 //                    LogUtil.log("*********************Top Activity: " + info.topActivity.getClassName() + " ***********************");
 //                }
-                Script.printallActivityView(activity,true);
+//                Script.printallActivityView(activity,true);
             }
         };
         Timer timer = new Timer();

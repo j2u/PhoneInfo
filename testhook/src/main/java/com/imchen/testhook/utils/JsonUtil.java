@@ -7,7 +7,6 @@ import org.json.JSONObject;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.lang.reflect.Method;
@@ -35,7 +34,7 @@ public class JsonUtil {
                 fis.read(buff);
                 fis.close();
 
-                LogUtil.log("use /sdcard/" + pkgname + ".hook");
+                LogUtil.log("read properties from sdcard:" + pkgname + ".hook");
                 return new String(buff,"utf-8");
             }
 
