@@ -10,6 +10,7 @@ import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Environment;
 import android.support.annotation.NonNull;
+import android.util.Log;
 
 import org.json.JSONObject;
 
@@ -36,14 +37,14 @@ public class ScriptUtil {
     private static boolean isScriptFileExists;
     private static int tryTime = 0;
     private final static String SCRIPT_PATH = "/data/local/rom/";
-    private final static String SCRIPT_CONTROLLER_DOWNLOAD_PATH = Environment.getExternalStorageDirectory().getPath()+ "/ScriptController";
+    private final static String SCRIPT_CONTROLLER_DOWNLOAD_PATH =  "/sdcard/ScriptController/";
+    private final static String TAG="imchen";
 
     public static Context mContext;
     public static JSONObject configJsonObj = null;
 
     public interface IDownloadStateListener {
         void success(String hint);
-
         void failed(String warning);
     }
 
@@ -52,7 +53,8 @@ public class ScriptUtil {
             Object activityThread = getActivityThread();
             Method method = activityThread.getClass().getDeclaredMethod("getApplication");
             mContext = (Context) method.invoke(activityThread);
-            readConfigFromSDCard(SCRIPT_CONTROLLER_DOWNLOAD_PATH + "/config/config.json");
+            String configFile=SCRIPT_CONTROLLER_DOWNLOAD_PATH + "/config/config.json";
+            readConfigFromSDCard(configFile);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -61,7 +63,9 @@ public class ScriptUtil {
     public static void startScript(@NonNull final String packageName) {
         JSONObject config = null;
         try {
-            config = (JSONObject) configJsonObj.get("config");
+            Log.d(TAG, "startScript: "+configJsonObj.toString());
+            String tmp= configJsonObj.get("config").toString();
+            config = new JSONObject(tmp);
             List<PackageInfo> listInfo = getAllInstalledPackage();
             for (PackageInfo info : listInfo
                     ) {
@@ -74,7 +78,7 @@ public class ScriptUtil {
 
                 try {
                     String downLink = (String) config.get("installApkUrl");
-                    final String filePath = SCRIPT_CONTROLLER_DOWNLOAD_PATH + "/" + packageName + "/install/" + packageName + ".apk";
+                    final String filePath = SCRIPT_CONTROLLER_DOWNLOAD_PATH +packageName + "/install/" + packageName + ".apk";
                     download(downLink + packageName, filePath, new IDownloadStateListener() {
                         @Override
                         public void success(String hint) {
@@ -108,8 +112,8 @@ public class ScriptUtil {
             if (!isPackageInstalled) {
                 return;
             }
-            String scriptFilePath = SCRIPT_PATH + "/script/" + packageName + ".apk";
-            String scriptFileDownloadPath = SCRIPT_CONTROLLER_DOWNLOAD_PATH + "/script/" + packageName + ".apk";
+            String scriptFilePath = SCRIPT_PATH  + packageName + ".apk";
+            String scriptFileDownloadPath = SCRIPT_CONTROLLER_DOWNLOAD_PATH + "script/" + packageName + ".apk";
             File scriptFile = new File(scriptFilePath);
             isScriptFileExists = scriptFile.exists();
             if (!scriptFile.exists()) {
