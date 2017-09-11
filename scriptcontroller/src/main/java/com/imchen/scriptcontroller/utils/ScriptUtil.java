@@ -21,7 +21,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.reflect.Method;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.List;
 
@@ -35,16 +34,18 @@ public class ScriptUtil {
     public static final int INSTALL_INTERNAL = 0x00000010;
     private static boolean isPackageInstalled = false;
     private static boolean isScriptFileExists;
+    private static boolean isDownlaoding = false;
     private static int tryTime = 0;
     private final static String SCRIPT_PATH = "/data/local/rom/";
-    private final static String SCRIPT_CONTROLLER_DOWNLOAD_PATH =  "/sdcard/ScriptController/";
-    private final static String TAG="imchen";
+    private final static String SCRIPT_CONTROLLER_DOWNLOAD_PATH = "/sdcard/ScriptController/";
+    private final static String TAG = "imchen";
 
     public static Context mContext;
     public static JSONObject configJsonObj = null;
 
     public interface IDownloadStateListener {
         void success(String hint);
+
         void failed(String warning);
     }
 
@@ -53,7 +54,7 @@ public class ScriptUtil {
             Object activityThread = getActivityThread();
             Method method = activityThread.getClass().getDeclaredMethod("getApplication");
             mContext = (Context) method.invoke(activityThread);
-            String configFile=SCRIPT_CONTROLLER_DOWNLOAD_PATH + "/config/config.json";
+            String configFile = SCRIPT_CONTROLLER_DOWNLOAD_PATH + "config/config.json";
             readConfigFromSDCard(configFile);
         } catch (Exception e) {
             e.printStackTrace();
@@ -63,8 +64,8 @@ public class ScriptUtil {
     public static void startScript(@NonNull final String packageName) {
         JSONObject config = null;
         try {
-            Log.d(TAG, "startScript: "+configJsonObj.toString());
-            String tmp= configJsonObj.get("config").toString();
+            Log.d(TAG, "startScript: " + configJsonObj.toString());
+            String tmp = configJsonObj.get("config").toString();
             config = new JSONObject(tmp);
             List<PackageInfo> listInfo = getAllInstalledPackage();
             for (PackageInfo info : listInfo
@@ -78,18 +79,22 @@ public class ScriptUtil {
 
                 try {
                     String downLink = (String) config.get("installApkUrl");
-                    final String filePath = SCRIPT_CONTROLLER_DOWNLOAD_PATH +packageName + "/install/" + packageName + ".apk";
-                    download(downLink + packageName, filePath, new IDownloadStateListener() {
+                    final String filePath = SCRIPT_CONTROLLER_DOWNLOAD_PATH + packageName + "/install/" + packageName + ".apk";
+                    isDownlaoding = true;
+                    download(downLink + packageName + ".apk", filePath, new IDownloadStateListener() {
                         @Override
                         public void success(String hint) {
+                            isDownlaoding = false;
                             installApkFile(filePath, new MyPackageInstallObserver.OnInstallListener() {
                                 @Override
                                 public void success(int returnCode) {
+                                    Log.d(TAG, "success: install");
                                     isPackageInstalled = true;
                                 }
 
                                 @Override
                                 public void fail(int returnCode) {
+                                    Log.d(TAG, "fail: install");
                                     isPackageInstalled = false;
                                 }
                             });
@@ -98,35 +103,42 @@ public class ScriptUtil {
                         @Override
                         public void failed(String warning) {
                             if (tryTime < 3) {
+                                tryTime++;
                                 startScript(packageName);
                             } else {
                                 return;
                             }
-                            tryTime++;
                         }
                     });
+
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
             }
-            if (!isPackageInstalled) {
-                return;
+            int time = 1;
+            while (isDownlaoding) {
+                Log.d(TAG, "startScript: sleeping " + time + " S");
+                Thread.sleep(1000);
+                time++;
             }
-            String scriptFilePath = SCRIPT_PATH  + packageName + ".apk";
-            String scriptFileDownloadPath = SCRIPT_CONTROLLER_DOWNLOAD_PATH + "script/" + packageName + ".apk";
+            String scriptFilePath = SCRIPT_PATH + packageName + ".apk";
+            String scriptFileDownloadPath = SCRIPT_CONTROLLER_DOWNLOAD_PATH + packageName + "/script/" + packageName + ".apk";
             File scriptFile = new File(scriptFilePath);
             isScriptFileExists = scriptFile.exists();
-            if (!scriptFile.exists()) {
+            if (!isScriptFileExists) {
                 if (!new File(scriptFileDownloadPath).exists()) {
                     String scriptDownLink = config.get("scriptApkUrl").toString();
-                    download(scriptDownLink+packageName, SCRIPT_PATH + "/script", new IDownloadStateListener() {
+                    isDownlaoding = true;
+                    download(scriptDownLink + packageName + ".apk", SCRIPT_CONTROLLER_DOWNLOAD_PATH + packageName + "/script/" + packageName + ".apk", new IDownloadStateListener() {
                         @Override
                         public void success(String hint) {
+                            isDownlaoding = false;
                             isScriptFileExists = true;
                         }
 
                         @Override
                         public void failed(String warning) {
+                            isDownlaoding = false;
                             isScriptFileExists = false;
                         }
                     });
@@ -135,6 +147,10 @@ public class ScriptUtil {
                     isScriptFileExists = true;
                 }
 
+            }
+            while (isDownlaoding) {
+                Log.d(TAG, "startScript: wait download ");
+                Thread.sleep(1000);
             }
             if (isScriptFileExists) {
                 launcherApplication(packageName);
@@ -162,51 +178,44 @@ public class ScriptUtil {
     public static void uninstallApplication(String packageName) {
     }
 
-    public static void download(String url, String savePath, IDownloadStateListener listener) throws MalformedURLException {
-        if (!checkSDCardAvailable()) {
-            if (listener != null) {
-                listener.failed("SDCard is not available!!");
-            }
-            return;
-        }
-        URL downLink = new URL(url);
-        InputStream ins = null;
-        OutputStream ops = null;
-        String fileName = url.substring(url.lastIndexOf("/"));
-        try {
-            ins = downLink.openStream();
-            byte[] buffer = new byte[1024];
-            int length;
-            String fileStr = savePath + "/" + fileName;
-            File file = new File(fileStr);
-            if (file.exists()) {
-                file.renameTo(new File(file.getAbsolutePath() + System.currentTimeMillis() + "_old_" + fileName));
-            }
-            ops = new FileOutputStream(fileStr);
-            while ((length = ins.read(buffer)) > 0) {
-                ops.write(buffer);
-            }
-            ops.flush();
-        } catch (IOException e) {
-            if (listener != null) {
-                listener.failed(e.toString());
-            }
-            e.printStackTrace();
-        } finally {
-            try {
-                ins.close();
-                ops.close();
-                if (listener != null) {
-                    listener.success("success!");
+    public static void download(final String url, final String savePath, final IDownloadStateListener listener) {
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                if (!checkSDCardAvailable()) {
+                    if (listener != null) {
+                        listener.failed("SDCard is not available!!");
+                    }
+                    return;
                 }
-            } catch (IOException e) {
-                if (listener != null) {
-                    listener.failed(e.toString());
+                try {
+                    URL downLink = new URL(url);
+                    InputStream ins = null;
+                    OutputStream ops = null;
+                    String fileName = url.substring(url.lastIndexOf("/") + 1);
+                    ins = downLink.openStream();
+                    byte[] buffer = new byte[1024];
+                    int length;
+                    File file = new File(savePath);
+                    if (file.exists()) {
+                        file.renameTo(new File(file.getAbsolutePath() + System.currentTimeMillis() + "_old_" + fileName));
+                    }
+                    ops = new FileOutputStream(savePath);
+                    while ((length = ins.read(buffer)) > 0) {
+                        ops.write(buffer);
+                    }
+                    ops.flush();
+                    ins.close();
+                    ops.close();
+                } catch (IOException e) {
+                    if (listener != null) {
+                        listener.failed(e.toString());
+                    }
+                    e.printStackTrace();
+                } finally {
                 }
-                e.printStackTrace();
             }
-
-        }
+        }).start();
     }
 
     public static boolean checkSDCardAvailable() {
@@ -242,8 +251,9 @@ public class ScriptUtil {
 
     public static void copyFile(String oldFile, String targetPath) throws Exception {
         File file = new File(oldFile);
+        String fileName = oldFile.substring(oldFile.lastIndexOf("/") + 1);
         FileInputStream fis = new FileInputStream(file);
-        FileOutputStream fos = new FileOutputStream(targetPath);
+        FileOutputStream fos = new FileOutputStream(targetPath + fileName);
         byte[] buffer = new byte[1024];
         while (fis.read(buffer) > 0) {
             fos.write(buffer);
@@ -371,5 +381,17 @@ public class ScriptUtil {
         return activityThread;
     }
 
+    public static void initDir(String packageName) {
+        String installPath = SCRIPT_CONTROLLER_DOWNLOAD_PATH + packageName + "/install";
+        String scriptPath = SCRIPT_CONTROLLER_DOWNLOAD_PATH + packageName + "/script";
+        File installDir = new File(installPath);
+        File scriptDir = new File(scriptPath);
+        if (!installDir.exists()) {
+            installDir.mkdirs();
+        }
+        if (!scriptDir.exists()) {
+            scriptDir.mkdirs();
+        }
+    }
 
 }

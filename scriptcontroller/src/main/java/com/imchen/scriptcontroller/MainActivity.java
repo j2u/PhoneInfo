@@ -41,6 +41,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             case R.id.start_script_btn:
                 String packageName=mPackageNameEt.getText().toString();
                 if (packageName!=null&&!"".equals(packageName)){
+                    ScriptUtil.initDir(packageName);
                 ScriptUtil.startScript(packageName);
                 }else {
                     Toast.makeText(getApplicationContext(),"please input package name!!!",Toast.LENGTH_SHORT).show();

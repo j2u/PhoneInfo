@@ -20,6 +20,7 @@
         android:id="@+id/et_packageName"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:text="com.imchen.testhook"
         android:hint="input package name to start" />
 
     <Button
