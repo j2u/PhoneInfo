@@ -75,10 +75,10 @@ public class JsonUtil {
 
             Class<?> clsServiceManager = String.class.getClassLoader().loadClass("android.os.ServiceManager");
 
-            Method md = clsServiceManager.getDeclaredMethod("getIServiceManager", null);
+            Method md = clsServiceManager.getDeclaredMethod("getIServiceManager", (Class<?>) null);
 
             md.setAccessible(true);
-            Object objIServiceManager = md.invoke(clsServiceManager, null);
+            Object objIServiceManager = md.invoke(clsServiceManager, (Object) null);
 
             Method localMethod = objIServiceManager.getClass().getDeclaredMethod("getService",
                     new Class[] { String.class });

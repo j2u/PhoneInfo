@@ -1,25 +1,21 @@
 package com.imchen.testhook;
 
-import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.ComponentName;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.location.Location;
 import android.os.AsyncTask;
-import android.os.Binder;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
 import android.os.Message;
 import android.provider.Settings;
-import android.support.v4.app.FragmentActivity;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
-import android.view.inputmethod.InputMethod;
-import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.TextView;
 
@@ -31,15 +27,10 @@ import com.imchen.testhook.Entity.Wifi;
 import com.imchen.testhook.service.PhoneInfoService;
 import com.imchen.testhook.service.ReadViewService;
 import com.imchen.testhook.utils.ContextUtil;
-import com.imchen.testhook.utils.FloatViewUtil;
-import com.imchen.testhook.utils.HttpUtil;
 import com.imchen.testhook.utils.JsonUtil;
 import com.imchen.testhook.utils.LogUtil;
-import com.imchen.testhook.utils.MyScriptUtil;
 import com.imchen.testhook.utils.PhoneInfoUtil;
-import com.myrom.aidl.IScriptManager;
 
-import org.json.JSONException;
 import org.json.JSONObject;
 
 @SuppressWarnings("WrongConstant")
@@ -87,6 +78,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     mTvDump.setText(dumpViewContent + "\n" + tmp);
                     LogUtil.log("content: " + dumpViewContent + " tmp: " + tmp);
                     break;
+                case 0x1:
+                    Location location = msg.getData().getParcelable("location");
+                    MainActivity.mLocationTv.setText("Latitude: " + location.getLatitude() + "\nLongitude: " + location.getLongitude() +
+                            "\nAccuracy: " + location.getAccuracy() + "\nAltitude: " + location.getAltitude() + "\nSpeed: " + location.getSpeed() +
+                            "\nTime: " + location.getTime());
+                    break;
                 default:
                     break;
             }
@@ -99,13 +96,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         new ContextUtil();
         mContext = getApplicationContext();
         setContentView(R.layout.activity_main);
-        FragmentActivity fa=new FragmentActivity();
-        boolean b=(Object)fa instanceof Activity;
-        LogUtil.log(fa.toString()+" instance of :"+b);
 //        FloatViewUtil.addFloatView(mContext);
         findViewInit();
         listenerInit();
-        phoneInfoUtil = new PhoneInfoUtil(getApplicationContext());
         JsonUtil.getJo(null);
         JsonUtil.writeJson();
 //        LogUtil.log("calling uid: " + Binder.getCallingUid());
@@ -142,10 +135,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     private void listenerInit() {
-//        mHelloBtn.setOnClickListener(helloListener);
-//        mWifiBtn.setOnClickListener(wifiClickListener);
-//        mLocationBtn.setOnClickListener(locationClickListenr);
-        mOneKeyBtn.setOnClickListener(commitOnClickListener);
+        mOneKeyBtn.setOnClickListener(this);
 
         //获取settings
         mUninstallBtn.setOnClickListener(unInstallListener);
@@ -154,57 +144,18 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         mAirPlaneBtn.setOnClickListener(this);
         mServiceBtn.setOnClickListener(this);
         mStartScriptBtn.setOnClickListener(this);
-//        mCommitBtn.setOnClickListener(commitOnClickListener);
     }
-
-//    public View.OnClickListener helloListener = new View.OnClickListener() {
-//        @Override
-//        public void onClick(View v) {
-//            Toast.makeText(getApplicationContext(), "click time:" + time, Toast.LENGTH_SHORT).show();
-//            time++;
-//            getBluetoothInfo();
-//        }
-//    };
-
-//    public View.OnClickListener wifiClickListener = new View.OnClickListener() {
-//        @Override
-//        public void onClick(View v) {
-//            getWifiInfo();
-//        }
-//    };
-
-//    public View.OnClickListener locationClickListenr = new View.OnClickListener() {
-//        @Override
-//        public void onClick(View v) {
-//            getLocationInfo();
-//        }
-//    };
-
-//    public View.OnClickListener oneKeyOnClickListener = new View.OnClickListener() {
-//        @Override
-//        public void onClick(View v) {
-//            phoneInfoUtil.getAllInfo(MainActivity.this);
-//        }
-//    };
-
-    public View.OnClickListener commitOnClickListener = new View.OnClickListener() {
-        @Override
-        public void onClick(View v) {
-            new Thread(myRunable).start();
-//            new updateViewTask().execute(service);
-        }
-    };
 
     Runnable myRunable = new Runnable() {
         @Override
         public void run() {
             Looper.prepare();
             service = new PhoneInfoService();
-            String info = service.getAllPhoneInfo(getApplicationContext());
-
+            String info = service.getAllPhoneInfo();//获取信息
+//            setViewInfo(service);
             new updateViewTask().execute(service);
 //            LogUtil.log("info.json: " + info);
-            HttpUtil.doPost("192.168.1.123", info);
+//            HttpUtil.doPost("192.168.1.123", info);
             Looper.loop();
         }
     };
@@ -212,6 +163,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     @Override
     public void onClick(View v) {
         switch (v.getId()) {
+            case R.id.btn_onekey:
+                new Thread(myRunable).start();
+                break;
             case R.id.btn_install:
                 Intent intent = new Intent(MainActivity.this, InstallActivity.class);
                 startActivity(intent);
@@ -227,21 +181,21 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 startActivity(intent2);
                 break;
             case R.id.btn_startScript:
-                JSONObject jsonObject =new JSONObject();
+                JSONObject jsonObject = new JSONObject();
                 try {
-                    Intent scriptIntent=new Intent("com.myrom.mm.script");
+                    Intent scriptIntent = new Intent("com.myrom.mm.script");
                     scriptIntent.setPackage("com.tencent.mm");
                     bindService(scriptIntent, new ServiceConnection() {
                         @Override
                         public void onServiceConnected(ComponentName name, IBinder service) {
-                            LogUtil.log("connected success! "+name);
+                            LogUtil.log("connected success! " + name);
                         }
 
                         @Override
                         public void onServiceDisconnected(ComponentName name) {
-                            LogUtil.log("disconnected!!!"+ name);
+                            LogUtil.log("disconnected!!!" + name);
                         }
-                    },Context.BIND_AUTO_CREATE);
+                    }, Context.BIND_AUTO_CREATE);
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -284,23 +238,17 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         try {
             mBluetoothTv.setText("MAC Address: " + bluetooth.getAddress());
             mBatteryTv.setText("Battery Level: " + battery.getLevel() + "\nBattery Scale: " + battery.getScale());
-            mTelePhoneTv.setText("DeviceId: " + telephony.getDeviceId() + "\nVoiceMailAlphaTag: " + telephony.getVoiceMailAlphaTag() +
+            mTelePhoneTv.setText("Imei: " + telephony.getDeviceId() + "\nImsi:"+telephony.getSubscriberId()+"\nVoiceMailAlphaTag: " + telephony.getVoiceMailAlphaTag() +
                     "\nGroupIdLevel1: " + telephony.getGroupIdLevel1());
             mLocationTv.setText(location.toString());
-            mWifiTv.setText("Wifi MAC: " + wifi.getMacAddress() + "\nWifi BSSID: " + wifi.getBSSID() + "\nIP: " + wifi.getIp());
+            mWifiTv.setText("Wifi MAC: " + wifi.getMacAddress() + "\nWifi BSSID: " + wifi.getBSSID() + "\nIP: " + wifi.getIp()+
+            "\nOutNetIP:"+wifi.getOutNetIp());
             mBuildTv.setText(build.toString() + build.getVERSION().toString() + "\n" + build.getVERSION().getCodes().toString());
         } catch (Exception e) {
             e.printStackTrace();
             LogUtil.log(e);
         }
     }
-
-    private View.OnClickListener settingListener = new View.OnClickListener() {
-        @Override
-        public void onClick(View v) {
-            PhoneInfoUtil.getSystemSetting();
-        }
-    };
 
     private View.OnClickListener unInstallListener = new View.OnClickListener() {
         @Override
@@ -319,10 +267,4 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
     };
 
-    private View.OnClickListener installBtnListener = new View.OnClickListener() {
-        @Override
-        public void onClick(View v) {
-//            Intent
-        }
-    };
 }

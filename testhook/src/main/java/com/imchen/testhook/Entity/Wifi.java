@@ -9,6 +9,7 @@ public class Wifi {
     private String BSSID;
     private String MacAddress;
     private String ip;
+    private String outNetIp;
 
     public String getBSSID() {
         return BSSID;
@@ -32,5 +33,13 @@ public class Wifi {
 
     public void setIp(String ip) {
         this.ip = ip;
+    }
+
+    public String getOutNetIp() {
+        return outNetIp;
+    }
+
+    public void setOutNetIp(String outNetIp) {
+        this.outNetIp = outNetIp;
     }
 }

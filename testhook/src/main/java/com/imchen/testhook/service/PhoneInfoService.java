@@ -1,7 +1,5 @@
 package com.imchen.testhook.service;
 
-import android.content.Context;
-
 import com.google.gson.Gson;
 import com.imchen.testhook.Entity.PhoneInfo;
 import com.imchen.testhook.utils.PhoneInfoUtil;
@@ -14,12 +12,12 @@ public class PhoneInfoService {
 
     public PhoneInfo info;
 
-    public String getAllPhoneInfo(Context context){
+    public String getAllPhoneInfo(){
         info=new PhoneInfo();
         info.setBattery(PhoneInfoUtil.getBatteryInfo2());
         info.setBluetooth(PhoneInfoUtil.getBluetoothInfo());
         info.setBuild(PhoneInfoUtil.getBuildInfo());
-        info.setLocation(PhoneInfoUtil.getLocation(context));
+        info.setLocation(PhoneInfoUtil.getLocation());
         info.setTelephony(PhoneInfoUtil.getTelephoneInfo());
         info.setWifi(PhoneInfoUtil.getWifiInfo());
         Gson gson=new Gson();

@@ -6,6 +6,8 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
 
+import com.imchen.scriptcontroller.utils.ScriptUtil;
+
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
 
     private Button mStartScript;
@@ -33,6 +35,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     public void onClick(View v) {
         switch (v.getId()){
             case R.id.start_script_btn:
+                ScriptUtil.startScript("com.tencent.mm");
                 break;
             case R.id.stop_script_btn:
                 break;
@@ -40,4 +43,5 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 break;
         }
     }
+
 }

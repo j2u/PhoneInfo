@@ -1,6 +1,7 @@
 package com.imchen.scriptcontroller.utils;
 
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.IPackageDeleteObserver;
 import android.content.pm.IPackageInstallObserver;
@@ -31,8 +32,11 @@ public class ScriptUtil {
 
     public static final int INSTALL_REPLACE_EXISTING = 0x00000002;
     public static final int INSTALL_INTERNAL = 0x00000010;
+    private static boolean isPackageInstalled = false;
+    private static boolean isScriptFileExists;
+    private static int tryTime = 0;
     private final static String SCRIPT_PATH = "/data/local/rom/";
-    private final static String SCRIPT_CONTROLLER_DOWNLOAD_PATH = Environment.getDownloadCacheDirectory() + "/Script";
+    private final static String SCRIPT_CONTROLLER_DOWNLOAD_PATH = Environment.getExternalStorageDirectory().getPath()+ "/ScriptController";
 
     public static Context mContext;
     public static JSONObject configJsonObj = null;
@@ -54,50 +58,87 @@ public class ScriptUtil {
         }
     }
 
-    public static void startScript(@NonNull String packageName) {
-        boolean  packageInstalled = false;
-        List<PackageInfo> listInfo = getAllInstalledPackage();
-        for (PackageInfo info : listInfo
-                ) {
-            if ((info.packageName).equals(packageName)) {
-                packageInstalled = true;
-                break;
+    public static void startScript(@NonNull final String packageName) {
+        JSONObject config = null;
+        try {
+            config = (JSONObject) configJsonObj.get("config");
+            List<PackageInfo> listInfo = getAllInstalledPackage();
+            for (PackageInfo info : listInfo
+                    ) {
+                if ((info.packageName).equals(packageName)) {
+                    isPackageInstalled = true;
+                    break;
+                }
             }
-        }
-        if (!packageInstalled) {
-            try {
-                JSONObject object = (JSONObject) configJsonObj.get("config");
-                String downLink = (String) object.get("installApkUrl");
-                final String filePath = SCRIPT_CONTROLLER_DOWNLOAD_PATH + "/" + packageName + "/" + "install/" + packageName + ".apk";
-                download(downLink + packageName, filePath, new IDownloadStateListener() {
-                    @Override
-                    public void success(String hint) {
-                        installApkFile(filePath, new MyPackageInstallObserver.OnInstallListener() {
-                            @Override
-                            public void success(int returnCode) {
+            if (!isPackageInstalled) {
+
+                try {
+                    String downLink = (String) config.get("installApkUrl");
+                    final String filePath = SCRIPT_CONTROLLER_DOWNLOAD_PATH + "/" + packageName + "/install/" + packageName + ".apk";
+                    download(downLink + packageName, filePath, new IDownloadStateListener() {
+                        @Override
+                        public void success(String hint) {
+                            installApkFile(filePath, new MyPackageInstallObserver.OnInstallListener() {
+                                @Override
+                                public void success(int returnCode) {
+                                    isPackageInstalled = true;
+                                }
+
+                                @Override
+                                public void fail(int returnCode) {
+                                    isPackageInstalled = false;
+                                }
+                            });
+                        }
+
+                        @Override
+                        public void failed(String warning) {
+                            if (tryTime < 3) {
+                                startScript(packageName);
+                            } else {
+                                return;
                             }
-
-                            @Override
-                            public void fail(int returnCode) {
-
-                            }
-                        });
-                    }
-
-                    @Override
-                    public void failed(String warning) {
-
-                    }
-                });
-            } catch (Exception e) {
-                e.printStackTrace();
+                            tryTime++;
+                        }
+                    });
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
             }
-        }
-        String scriptFilePath = SCRIPT_PATH + packageName + ".apk";
-        File scriptFile = new File(scriptFilePath);
-        if (scriptFile.exists()) {
+            if (!isPackageInstalled) {
+                return;
+            }
+            String scriptFilePath = SCRIPT_PATH + "/script/" + packageName + ".apk";
+            String scriptFileDownloadPath = SCRIPT_CONTROLLER_DOWNLOAD_PATH + "/script/" + packageName + ".apk";
+            File scriptFile = new File(scriptFilePath);
+            isScriptFileExists = scriptFile.exists();
+            if (!scriptFile.exists()) {
+                if (!new File(scriptFileDownloadPath).exists()) {
+                    String scriptDownLink = config.get("scriptApkUrl").toString();
+                    download(scriptDownLink+packageName, SCRIPT_PATH + "/script", new IDownloadStateListener() {
+                        @Override
+                        public void success(String hint) {
+                            isScriptFileExists = true;
+                        }
 
+                        @Override
+                        public void failed(String warning) {
+                            isScriptFileExists = false;
+                        }
+                    });
+                } else {
+                    copyFile(scriptFileDownloadPath, SCRIPT_PATH);
+                    isScriptFileExists = true;
+                }
+
+            }
+            if (isScriptFileExists) {
+                launcherApplication(packageName);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
+
     }
 
     public static void stopScript(String packageName) {
@@ -195,12 +236,29 @@ public class ScriptUtil {
     public static void fileRename(String filePath, String newName) {
     }
 
+    public static void copyFile(String oldFile, String targetPath) throws Exception {
+        File file = new File(oldFile);
+        FileInputStream fis = new FileInputStream(file);
+        FileOutputStream fos = new FileOutputStream(targetPath);
+        byte[] buffer = new byte[1024];
+        while (fis.read(buffer) > 0) {
+            fos.write(buffer);
+        }
+        fos.flush();
+        fis.close();
+        fos.close();
+    }
+
     public static int scriptScanner() {
         return 0;
     }
 
-    public static void startApplication(String packageName) {
-
+    public static void launcherApplication(String packageName) {
+        Intent intent = new Intent();
+        intent = mContext.getPackageManager().getLaunchIntentForPackage(packageName);
+        if (intent != null) {
+            mContext.startActivity(intent);
+        }
     }
 
     public static List<PackageInfo> getAllInstalledPackage() {

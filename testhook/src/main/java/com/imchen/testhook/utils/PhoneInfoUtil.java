@@ -79,11 +79,11 @@ import static android.content.Context.TELEPHONY_SERVICE;
 
 
 public class PhoneInfoUtil {
-    private static Context context;
     private static int level;
     private static int scale;
     private static String locationProvider;
     private static Location location;
+    private static Context mContext;
 
     private static Handler mHandler = new Handler() {
         @Override
@@ -99,37 +99,65 @@ public class PhoneInfoUtil {
         }
     };
 
+    static {
+        try {
+            Object activityThread = getActivityThread();
+            Method method = activityThread.getClass().getDeclaredMethod("getApplication");
+            mContext = (Context) method.invoke(activityThread);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 
-    public PhoneInfoUtil(Context context) {
-        this.context = context;
+    public PhoneInfoUtil() {
+    }
+
+    public static Context getContext() {
+        return mContext;
+    }
+
+    private static Object getActivityThread() {
+        Object activityThread;
+        try {
+            Class cls = Class.forName("android.app.ActivityThread");
+            Method method = cls.getDeclaredMethod("currentActivityThread");
+            activityThread = method.invoke(null);
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+            return null;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+        return activityThread;
     }
 
 
-    public void getAllInfo(Activity activity) {
-        getWifiInfo();
-        getAvailMemory();
-        getBluetoothAddress();
-        getCpuInfo();
-        getLocalIpAddress();
-        getLocalIpAddress2();
+//    public void getAllInfo(Activity activity) {
+//        getWifiInfo();
+//        getAvailMemory();
+//        getBluetoothAddress();
+//        getCpuInfo();
+//        getLocalIpAddress();
+//        getLocalIpAddress2();
+////        getLocation();
+////        getLocationInfo();
+//        getPhoneState();
+//        getSDCardInfo();
+//        getSimCardInfo();
+//        getSystemMemory();
+//        getTotalMemory();
+//        getWeithAndHeight(activity);
+//        getBuildInfo();
+//        getTelephoneInfo();
+//        getBatteryInfo();
+//        getDisplayInfo(activity);
+////        batteryReciver();
+//        getBatteryInfo2();
+//        getHttpAgent();
+//        getSystemSetting();
 //        getLocation();
-//        getLocationInfo();
-        getPhoneState();
-        getSDCardInfo();
-        getSimCardInfo();
-        getSystemMemory();
-        getTotalMemory();
-        getWeithAndHeight(activity);
-        getBuildInfo();
-        getTelephoneInfo();
-        getBatteryInfo();
-        getDisplayInfo(activity);
-//        batteryReciver();
-        getBatteryInfo2();
-        getHttpAgent();
-        getSystemSetting();
-        getLocation(context);
-    }
+//    }
 
     /**
      * 获取蓝牙地址Hook android.bluetooth.IBluetoothManager$Stub可以拦截
@@ -233,7 +261,7 @@ public class PhoneInfoUtil {
                         .getInetAddresses(); enumIpAddr.hasMoreElements(); ) {
                     InetAddress inetAddress = enumIpAddr.nextElement();
                     if (!inetAddress.isLoopbackAddress()) {
-                        Toast.makeText(context, inetAddress.getHostAddress().toString(), Toast.LENGTH_SHORT).show();
+                        Toast.makeText(mContext, inetAddress.getHostAddress().toString(), Toast.LENGTH_SHORT).show();
                         return inetAddress.getHostAddress().toString();
                     }
                 }
@@ -261,7 +289,7 @@ public class PhoneInfoUtil {
     // android:name="android.permission.WAKE_LOCK"></uses-permission>
     public String getLocalIpAddress2() {
         // 获取wifi服务
-        WifiManager wifiManager = (WifiManager) context.getSystemService(Context.WIFI_SERVICE);
+        WifiManager wifiManager = (WifiManager) mContext.getSystemService(Context.WIFI_SERVICE);
         // 判断wifi是否开启
         if (!wifiManager.isWifiEnabled()) {
             wifiManager.setWifiEnabled(true);
@@ -281,7 +309,7 @@ public class PhoneInfoUtil {
     /**
      * 查看本机外网IP
      * 该方法需要设备支持上网 查看
-     * System.out.println((GetNetIp("http://fw.qq.com/ipaddress"))); 加权限
+     * System.out.println((getOutNetIp("http://fw.qq.com/ipaddress"))); 加权限
      * <uses-permission
      * android:name="android.permission.INTERNET"></uses-permission>
      * 通过获取http://fw.qq.com/ipaddress网页取得外网IP 这里有几个查看IP的网址然后提取IP试试。
@@ -290,7 +318,7 @@ public class PhoneInfoUtil {
      * @param ipaddr
      * @return
      */
-    public String getNetIp(String ipaddr) {
+    public String getOutNetIp(String ipaddr) {
         URL infoUrl = null;
         InputStream inStream = null;
         try {
@@ -324,7 +352,7 @@ public class PhoneInfoUtil {
      */
     public static Wifi getWifiInfo() {
         Wifi wifi = new Wifi();
-        WifiManager wifiManager = (WifiManager) context.getSystemService(Context.WIFI_SERVICE);
+        WifiManager wifiManager = (WifiManager) mContext.getSystemService(Context.WIFI_SERVICE);
         if (wifiManager.isWifiEnabled()) {
             WifiInfo info = wifiManager.getConnectionInfo();
             String bssid = info.getBSSID();
@@ -333,6 +361,7 @@ public class PhoneInfoUtil {
             wifi.setBSSID(bssid);
             wifi.setMacAddress(macAddress);
             wifi.setIp(ipAddress);
+            wifi.setOutNetIp(getOutNetIp());
         }
         return wifi;
     }
@@ -352,12 +381,12 @@ public class PhoneInfoUtil {
         float density = dm.density; // 屏幕密度（0.75 / 1.0 / 1.5）
         int densityDpi = dm.densityDpi; // 屏幕密度DPI（120 / 160 / 240）
         // 在service中也能得到高和宽
-        WindowManager mWindowManager = (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
+        WindowManager mWindowManager = (WindowManager) mContext.getSystemService(Context.WINDOW_SERVICE);
         width = mWindowManager.getDefaultDisplay().getWidth();
         height = mWindowManager.getDefaultDisplay().getHeight();
 
         // 居中显示Toast
-        Toast msg = Toast.makeText(context, "宽=" + width + "   高=" + height, Toast.LENGTH_LONG);
+        Toast msg = Toast.makeText(mContext, "宽=" + width + "   高=" + height, Toast.LENGTH_LONG);
         msg.setGravity(Gravity.CENTER, msg.getXOffset() / 2,
                 msg.getYOffset() / 2);
         msg.show();
@@ -390,7 +419,7 @@ public class PhoneInfoUtil {
 
     public static com.imchen.testhook.Entity.Location getLocationInfo() {
         final com.imchen.testhook.Entity.Location myLocation = new com.imchen.testhook.Entity.Location();
-        LocationManager locationManager = (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
+        LocationManager locationManager = (LocationManager) mContext.getSystemService(Context.LOCATION_SERVICE);
         List<String> providers = locationManager.getProviders(true);
         final Message message = new Message();
         final Bundle bundle = new Bundle();
@@ -404,12 +433,12 @@ public class PhoneInfoUtil {
                 locationProvider = LocationManager.NETWORK_PROVIDER;
                 LogUtil.log("use providers ->" + locationProvider);
             } else {
-                Toast.makeText(context, "没有可用的位置提供器", Toast.LENGTH_SHORT).show();
+                Toast.makeText(mContext, "没有可用的位置提供器", Toast.LENGTH_SHORT).show();
                 return null;
             }
             LogUtil.log("getLocation: getProvider:" + providers.toString());
-            if (ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-                Toast.makeText(context, "Permission Denied!", Toast.LENGTH_SHORT).show();
+            if (ActivityCompat.checkSelfPermission(mContext, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(mContext, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                Toast.makeText(mContext, "Permission Denied!", Toast.LENGTH_SHORT).show();
                 return null;
             }
 //            location = locationManager.getLastKnownLocation(locationProvider);
@@ -464,11 +493,11 @@ public class PhoneInfoUtil {
         return myLocation;
     }
 
-    public static com.imchen.testhook.Entity.Location getLocation(Context context) {
+    public static com.imchen.testhook.Entity.Location getLocation() {
         com.imchen.testhook.Entity.Location myLocation = null;
         try {
             myLocation = new com.imchen.testhook.Entity.Location();
-            LocationManager locationManager = (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
+            LocationManager locationManager = (LocationManager) mContext.getSystemService(Context.LOCATION_SERVICE);
             LocationListener myGPSListener = new LocationListener() {
                 public void onLocationChanged(Location location) {
                     double latitude = location.getLatitude();
@@ -490,7 +519,7 @@ public class PhoneInfoUtil {
                     Message message = new Message();
                     message.setData(bundle);
                     message.what = 0x1;
-                    mHandler.sendMessage(message);
+                    MainActivity.mHandler.sendMessage(message);
                     //  Toast.makeText(thisContext, "latitude:"+latitude+ " longitude"+longitude+" location.getSpeed()="+location.getSpeed() , Toast.LENGTH_SHORT).show();
                 }
 
@@ -519,11 +548,9 @@ public class PhoneInfoUtil {
                 LogUtil.log("providers[" + i + "]=" + providers.get(i));
             }
 //            LogUtil.log("provider="+provider);
-            // �����û�ȡһ����ѵ�Provider
-            if (context.checkPermission(Manifest.permission.ACCESS_FINE_LOCATION, android.os.Process.myPid(), android.os.Process.myUid()) != PackageManager.PERMISSION_GRANTED) {
-                //Ȩ�޼��
+            if (mContext.checkPermission(Manifest.permission.ACCESS_FINE_LOCATION, android.os.Process.myPid(), android.os.Process.myUid()) != PackageManager.PERMISSION_GRANTED) {
                 LogUtil.log("Permission Denied!");
-                Toast.makeText(context, "Permission Denied!", Toast.LENGTH_SHORT).show();
+                Toast.makeText(mContext, "Permission Denied!", Toast.LENGTH_SHORT).show();
                 return null;
             }
             locationManager.requestLocationUpdates(provider, 3000, 0, myGPSListener);
@@ -611,7 +638,7 @@ public class PhoneInfoUtil {
      * 当前网络是否连接
      */
     public boolean isNetConnecting() {
-        ConnectivityManager connectivityManager = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+        ConnectivityManager connectivityManager = (ConnectivityManager) mContext.getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo networkInfo = connectivityManager.getActiveNetworkInfo();
         if (networkInfo == null || !networkInfo.isConnected()) {
             // info.setConnected(false);
@@ -627,7 +654,7 @@ public class PhoneInfoUtil {
      */
     public static void getPhoneState() {
         // 1. 创建telephonyManager 对象。
-        TelephonyManager telephonyManager = (TelephonyManager) context.getSystemService(TELEPHONY_SERVICE);
+        TelephonyManager telephonyManager = (TelephonyManager) mContext.getSystemService(TELEPHONY_SERVICE);
         // 2. 创建PhoneStateListener 对象
         PhoneStateListener MyPhoneListener = new PhoneStateListener() {
             @Override
@@ -717,11 +744,11 @@ public class PhoneInfoUtil {
     }// 手机的内存信息主要在/proc/meminfo文件中，其中第一行是总内存，而剩余内存可通过ActivityManager.MemoryInfo得到。
 
     private static String getAvailMemory() {// 获取android当前可用内存大小
-        ActivityManager am = (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
+        ActivityManager am = (ActivityManager) mContext.getSystemService(Context.ACTIVITY_SERVICE);
         ActivityManager.MemoryInfo mi = new ActivityManager.MemoryInfo();
         am.getMemoryInfo(mi);
         // mi.availMem; 当前系统的可用内存
-        return Formatter.formatFileSize(context, mi.availMem);// 将获取的内存大小规格化
+        return Formatter.formatFileSize(mContext, mi.availMem);// 将获取的内存大小规格化
     }
 
     private static String getTotalMemory() {
@@ -745,7 +772,7 @@ public class PhoneInfoUtil {
 
         } catch (IOException e) {
         }
-        return Formatter.formatFileSize(context, initial_memory);// Byte转换为KB或者MB，内存大小规格化
+        return Formatter.formatFileSize(mContext, initial_memory);// Byte转换为KB或者MB，内存大小规格化
     }
 
     // 获取手机CPU信息
@@ -862,7 +889,7 @@ public class PhoneInfoUtil {
         // 3. 之后的6位数(SNR)是”串号”，一般代表生产顺序号
         // 4. 最后1位数(SP)通常是”0″，为检验码，目前暂备用
 
-        TelephonyManager tm = (TelephonyManager) context
+        TelephonyManager tm = (TelephonyManager) mContext
                 .getSystemService(TELEPHONY_SERVICE);
                     /*
                      * 电话状态： 1.tm.CALL_STATE_IDLE=0 无活动，无任何状态时 2.tm.CALL_STATE_RINGING=1
@@ -1121,7 +1148,7 @@ public class PhoneInfoUtil {
      * 获取电话信息
      */
     public static Telephony getTelephoneInfo() {
-        TelephonyManager telephoneManager = (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
+        TelephonyManager telephoneManager = (TelephonyManager) mContext.getSystemService(Context.TELEPHONY_SERVICE);
         Telephony telephony = new Telephony();
         String DeviceId = telephoneManager.getDeviceId();
         String VoiceMailAlphaTag = telephoneManager.getVoiceMailAlphaTag();
@@ -1159,7 +1186,7 @@ public class PhoneInfoUtil {
     }
 
     public void getBatteryInfo() {
-        BatteryManager batteryManager = (BatteryManager) context.getSystemService(Context.BATTERY_SERVICE);
+        BatteryManager batteryManager = (BatteryManager) mContext.getSystemService(Context.BATTERY_SERVICE);
         try {
             LogUtil.log("obj : " + batteryManager);
             Class cls = String.class.getClassLoader().loadClass("android.battery.IBatteryManager");
@@ -1232,7 +1259,7 @@ public class PhoneInfoUtil {
     public static Battery getBatteryInfo2() {
         Battery battery = new Battery();
         IntentFilter ifilter = new IntentFilter(Intent.ACTION_BATTERY_CHANGED);
-        Intent batteryStatus = context.registerReceiver(null, ifilter);
+        Intent batteryStatus = mContext.registerReceiver(null, ifilter);
         try {
             level = batteryStatus.getIntExtra(BatteryManager.EXTRA_LEVEL, -1);
             scale = batteryStatus.getIntExtra(BatteryManager.EXTRA_SCALE, -1);
@@ -1267,15 +1294,15 @@ public class PhoneInfoUtil {
     }
 
     public static void getSystemSetting() {
-        String ariplaneMode = Settings.System.getString(context.getContentResolver(), Settings.System.AIRPLANE_MODE_ON);
-        String adbEnabled = Settings.System.getString(context.getContentResolver(), Settings.Global.ADB_ENABLED);
+        String ariplaneMode = Settings.System.getString(mContext.getContentResolver(), Settings.System.AIRPLANE_MODE_ON);
+        String adbEnabled = Settings.System.getString(mContext.getContentResolver(), Settings.Global.ADB_ENABLED);
         LogUtil.log("airplaneModeOn: " + ariplaneMode);
         LogUtil.log("adbEnabled: " + adbEnabled);
     }
 
     // 显示信息对话框
     public void showDialog(String title, String info) {
-        AlertDialog dialog = new AlertDialog.Builder(context)
+        AlertDialog dialog = new AlertDialog.Builder(mContext)
                 .setTitle(title)
                 .setMessage(info)
                 .setPositiveButton("close",
@@ -1288,6 +1315,35 @@ public class PhoneInfoUtil {
                             }
                         }).create();
         dialog.show();
+    }
+
+    public static String getOutNetIp() {
+        String ip = "";
+        InputStream inStream = null;
+        try {
+            URL infoUrl = new URL("http://1212.ip138.com/ic.asp");
+            URLConnection connection = infoUrl.openConnection();
+            HttpURLConnection httpConnection = (HttpURLConnection) connection;
+            int responseCode = httpConnection.getResponseCode();
+            if (responseCode == HttpURLConnection.HTTP_OK) {
+                inStream = httpConnection.getInputStream();
+                BufferedReader reader = new BufferedReader(new InputStreamReader(inStream, "gb2312"));
+                StringBuilder builder = new StringBuilder();
+                String line = null;
+                while ((line = reader.readLine()) != null) {
+                    builder.append(line);
+                    //builder.append(line).append("\n");
+                }
+                inStream.close();
+                int start = builder.indexOf("[");
+                int end = builder.indexOf("]");
+                ip = builder.substring(start + 1, end);
+                return ip;
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 
 }
