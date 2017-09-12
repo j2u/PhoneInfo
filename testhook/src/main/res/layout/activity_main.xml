@@ -21,6 +21,20 @@
             android:orientation="vertical">
 
             <TextView
+
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Application Dir:"
+                android:textColor="#262cd7" />
+
+            <TextView
+                android:id="@+id/tv_dir"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="dirdir"
+                />
+
+            <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="蓝牙info:"

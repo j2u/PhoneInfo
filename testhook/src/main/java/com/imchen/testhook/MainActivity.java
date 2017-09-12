@@ -7,6 +7,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.location.Location;
+import android.net.wifi.WifiManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
@@ -33,6 +34,10 @@ import com.imchen.testhook.utils.PhoneInfoUtil;
 
 import org.json.JSONObject;
 
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+
 @SuppressWarnings("WrongConstant")
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
 
@@ -54,6 +59,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private TextView mBatteryTv;
     private TextView mTelePhoneTv;
     private TextView mBuildTv;
+    private TextView mDirTv;
     private static TextView mTvDump;
     public static TextView mLocationTv;
 
@@ -65,6 +71,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private static String dumpViewContent = "";
 
     public final static int REFRESH_FLOAT_VIEW = 0x123;
+
+    public String applicationDir;
+    public ArrayList<String> fileList;
 
     public static Handler mHandler = new Handler() {
         @Override
@@ -107,6 +116,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         Intent intent = new Intent(MainActivity.this, ReadViewService.class);
         startService(intent);
+        initDir("/sdcard/testhook/test.json");
+//        testAirplaneMode();
 
 
     }
@@ -131,6 +142,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         mLocationTv = (TextView) findViewById(R.id.tv_location_info);
         mBuildTv = (TextView) findViewById(R.id.tv_build_info);
         mTelePhoneTv = (TextView) findViewById(R.id.tv_telephone_info);
+        mDirTv= (TextView) findViewById(R.id.tv_dir);
 //        mTvDump = (TextView) FloatViewUtil.mLinearLayout.findViewById(R.id.tv_dump);
     }
 
@@ -236,13 +248,21 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         Telephony telephony = service.info.getTelephony();
         Build build = service.info.getBuild();
         try {
+            String line="";
+            if (fileList!=null){
+                for (String fileName:fileList
+                     ) {
+                    line+=fileName+"\n";
+                }
+            }
+            mDirTv.setText("ApplicatoinDir: "+applicationDir+"\nfile: "+line);
             mBluetoothTv.setText("MAC Address: " + bluetooth.getAddress());
             mBatteryTv.setText("Battery Level: " + battery.getLevel() + "\nBattery Scale: " + battery.getScale());
-            mTelePhoneTv.setText("Imei: " + telephony.getDeviceId() + "\nImsi:"+telephony.getSubscriberId()+"\nVoiceMailAlphaTag: " + telephony.getVoiceMailAlphaTag() +
+            mTelePhoneTv.setText("Imei: " + telephony.getDeviceId() + "\nImsi:" + telephony.getSubscriberId() + "\nVoiceMailAlphaTag: " + telephony.getVoiceMailAlphaTag() +
                     "\nGroupIdLevel1: " + telephony.getGroupIdLevel1());
             mLocationTv.setText(location.toString());
-            mWifiTv.setText("Wifi MAC: " + wifi.getMacAddress() + "\nWifi BSSID: " + wifi.getBSSID() + "\nIP: " + wifi.getIp()+
-            "\nOutNetIP:"+wifi.getOutNetIp());
+            mWifiTv.setText("Wifi MAC: " + wifi.getMacAddress() + "\nWifi BSSID: " + wifi.getBSSID() + "\nIP: " + wifi.getIp() +
+                    "\nOutNetIP:" + wifi.getOutNetIp());
             mBuildTv.setText(build.toString() + build.getVERSION().toString() + "\n" + build.getVERSION().getCodes().toString());
         } catch (Exception e) {
             e.printStackTrace();
@@ -266,5 +286,47 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             startActivity(intent);
         }
     };
+
+    public void testAirplaneMode() {
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                while (true) {
+                    try {
+                        LogUtil.log(Settings.System.getInt(getApplicationContext().getContentResolver(), Settings.System.AIRPLANE_MODE_ON));
+                        WifiManager manager = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
+                        LogUtil.log("wifi address: " + manager.getConnectionInfo().getIpAddress());
+                    } catch (Settings.SettingNotFoundException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        }).start();
+    }
+
+    public void initDir(String baseDir) {
+        File file = new File(baseDir);
+        File dir = new File(file.getParent());
+        try {
+            if (!dir.exists()) {
+                dir.mkdirs();
+
+                file.createNewFile();
+
+            } else {
+                if (!file.exists()){
+                    file.createNewFile();
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        applicationDir=file.getParent();
+        fileList=new ArrayList<>();
+        for (File list:dir.listFiles()
+             ) {
+            fileList.add(list.getName());
+        }
+    }
 
 }
