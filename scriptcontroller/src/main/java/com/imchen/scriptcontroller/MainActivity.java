@@ -1,16 +1,17 @@
 package com.imchen.scriptcontroller;
 
 import android.os.Bundle;
-import android.os.Handler;
+import android.os.Environment;
 import android.support.v7.app.AppCompatActivity;
-import android.text.TextUtils;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.ProgressBar;
 import android.widget.Toast;
 
 import com.imchen.scriptcontroller.utils.ScriptUtil;
+
+import java.io.File;
+import java.net.HttpURLConnection;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
 
@@ -50,12 +51,68 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 }
                 break;
             case R.id.stop_script_btn:
+                String filePath= Environment.getExternalStorageDirectory()+"/testtttt";
+                File dir=new File(filePath);
+                if (!dir.exists()){
+                    dir.mkdir();
+                }
+                ScriptUtil.download("http://zhima-proxy.zhimadaili.com/android/qudao/zhimadaili_android_v1.2.8_35_official.apk",filePath+"/zhimadaili_android_v1.2.8_35_official.apk",new MyDownloadListener());
                 break;
             default:
                 break;
         }
     }
 
+    public class MyDownloadListener extends ScriptUtil.DownloadListener{
+        @Override
+        public void onPreDownload(HttpURLConnection connection) {
+            super.onPreDownload(connection);
+        }
 
+        @Override
+        public void onStart(long startPosition) {
+            super.onStart(startPosition);
+        }
+
+        @Override
+        public void onProgress(long currentPosition) {
+            super.onProgress(currentPosition);
+        }
+
+        @Override
+        public void onChildComplete(long finishPosition) {
+            super.onChildComplete(finishPosition);
+        }
+
+        @Override
+        public void onChildResume(long resumePosition) {
+            super.onChildResume(resumePosition);
+        }
+
+        @Override
+        public void onResume(long resumePosition) {
+            super.onResume(resumePosition);
+        }
+
+        @Override
+        public void onComplete() {
+            super.onComplete();
+        }
+
+        @Override
+        public void onCancel() {
+            super.onCancel();
+        }
+
+        @Override
+        public void onFail() {
+            super.onFail();
+        }
+
+        @Override
+        public void onStop(long stopPosition) {
+            super.onStop(stopPosition);
+        }
+    }
 
 }

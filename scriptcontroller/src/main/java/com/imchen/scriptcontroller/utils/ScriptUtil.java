@@ -15,18 +15,25 @@ import android.os.Handler;
 import android.os.Message;
 import android.support.annotation.NonNull;
 import android.util.Log;
+import android.util.SparseArray;
 
 import org.json.JSONObject;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.RandomAccessFile;
 import java.lang.reflect.Method;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.ProtocolException;
 import java.net.URL;
 import java.util.List;
+import java.util.Properties;
 
 /**
  * Created by imchen on 2017/9/8.
@@ -43,6 +50,17 @@ public class ScriptUtil {
     private final static String SCRIPT_PATH = "/data/local/rom/";
     private final static String SCRIPT_CONTROLLER_DOWNLOAD_PATH = "/sdcard/ScriptController/";
     private final static String TAG = "imchen";
+
+    public final static int DOWNLOAD_THREAD_NUM = 3;
+    public static int mCurrentPosition = 0;
+    private static int mCancelNum = 0;
+    private static int mStopNum = 0;
+    private static int mCompleteThreadNum = 0;
+    private static boolean isNewTask = false;
+    private static boolean isCancel = false;
+    private static boolean isStop = false;
+
+    private static DownloadListener mListener;
 
     public static Context mContext;
     public static JSONObject configJsonObj = null;
@@ -390,13 +408,13 @@ public class ScriptUtil {
         }
     }
 
-    public class DownloadTask extends Thread {
+    public class DownloadTask1 extends Thread {
 
         private String downloadLink;
         private String savePath;
         private IDownloadStateListener downStatusListener;
 
-        public DownloadTask(String downloadLink, String savePath,@NonNull IDownloadStateListener downStatusListener) {
+        public DownloadTask1(String downloadLink, String savePath, @NonNull IDownloadStateListener downStatusListener) {
             this.downloadLink = downloadLink;
             this.savePath = savePath;
             this.downStatusListener = downStatusListener;
@@ -406,8 +424,8 @@ public class ScriptUtil {
         public void run() {
             try {
                 URL url = new URL(downloadLink);
-                InputStream ins ;
-                OutputStream ops ;
+                InputStream ins;
+                OutputStream ops;
                 String fileName = downloadLink.substring(downloadLink.lastIndexOf("/") + 1);
                 ins = url.openStream();
                 byte[] buffer = new byte[1024];
@@ -419,10 +437,10 @@ public class ScriptUtil {
                 ops = new FileOutputStream(savePath);
                 int max = ins.available();
                 int curDownload;
-                while ((length=ins.read(buffer)) > 0) {
+                while ((length = ins.read(buffer)) != -1) {
                     ops.write(buffer);
-                    curDownload=length;
-                    downStatusListener.updateProgress(max,curDownload);
+                    curDownload = length;
+                    downStatusListener.updateProgress(max, curDownload);
                 }
                 ops.flush();
                 ins.close();
@@ -436,6 +454,382 @@ public class ScriptUtil {
             }
         }
     }
+
+
+    //重写下载模块
+
+    private static class DownloadEntity {
+        long fileSize;
+        String downloadUrl;
+        int threadId;
+        long startPosition;
+        long endPosition;
+        File tempFile;
+
+        public DownloadEntity(String downloadUrl, File tempFile, long fileSize, long startPosition, long endPosition, int threadId) {
+            this.fileSize = fileSize;
+            this.downloadUrl = downloadUrl;
+            this.threadId = threadId;
+            this.startPosition = startPosition;
+            this.endPosition = endPosition;
+            this.tempFile = tempFile;
+        }
+    }
+
+    private static class DownloadTask implements Runnable {
+
+        private DownloadEntity downloadInfo;
+        private String configFilePath;
+
+        public DownloadTask(DownloadEntity downloadInfo) {
+            this.downloadInfo = downloadInfo;
+            configFilePath = mContext.getFilesDir() + "/temp/" + downloadInfo.tempFile.getName() + ".properties";
+        }
+
+        @Override
+        public void run() {
+            try {
+                Log.d(TAG, "run: Thread_" + downloadInfo.threadId + "_正在下载【开始位置：" + downloadInfo.startPosition + "结束位置：" + downloadInfo.endPosition + "】");
+                URL url = new URL(downloadInfo.downloadUrl);
+                HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+                conn.setRequestProperty("Range", "bytes=" + downloadInfo.startPosition + "-" + downloadInfo.endPosition);
+                conn.setRequestMethod("GET");
+                conn.setRequestProperty("Charset", "UTF-8");
+                conn.setConnectTimeout(10000);
+                conn.setRequestProperty("User-Agent", "Mozilla/4.0 (compatible; MSIE 8.0; Windows NT " +
+                        "5.2; Trident/4.0; .NET CLR 1.1.4322; .NET CLR 2.0.50727; .NET CLR 3.0.04506.30; .NET CLR 3.0.4506.2152; .NET CLR 3.5.30729)");
+                conn.setRequestProperty("Accept", "image/gif, image/jpeg, image/pjpeg, image/pjpeg, " +
+                        "application/x-shockwave-flash, application/xaml+xml, application/vnd.ms-xpsdocument," +
+                        " application/x-ms-xbap, application/x-ms-application, application/vnd.ms-excel, application/vnd.ms-powerpoint, application/msword, */*");
+                conn.setReadTimeout(2000);
+                conn.connect();
+                int contentLength = conn.getContentLength();
+                if (contentLength < 0) {
+                    mListener.onFail();
+                    return;
+                }
+                int respCode = conn.getResponseCode();
+                InputStream is = conn.getInputStream();
+                //创建可设置位置的文件
+                RandomAccessFile file = new RandomAccessFile(downloadInfo.tempFile, "rwd");
+                file.seek(downloadInfo.startPosition);
+                byte[] buffer = new byte[1024];
+                int len;
+                long currentPosition = downloadInfo.startPosition;
+                while ((len = is.read(buffer)) != -1) {
+                    if (isCancel) {
+                        Log.d(TAG, "++++++++++ thread_" + downloadInfo.threadId + "_cancel ++++++++++");
+                        break;
+                    }
+
+                    if (isStop) {
+                        Log.d(TAG, "++++++++++ thread_" + downloadInfo.threadId + "_stop ++++++++++");
+                        break;
+                    }
+                    file.write(buffer, 0, len);
+                    synchronized (ScriptUtil.class) {
+                        mCurrentPosition += len;
+                    }
+                }
+                file.close();
+                is.close();
+
+                if (isCancel) {
+                    synchronized (ScriptUtil.class) {
+                        mCancelNum++;
+                        if (mCancelNum == DOWNLOAD_THREAD_NUM) {
+                            File configFile = new File(configFilePath);
+                            if (configFile.exists()) {
+                                configFile.delete();
+                            }
+                            if (downloadInfo.tempFile.exists()) {
+                                downloadInfo.tempFile.delete();
+                            }
+                            Log.d(TAG, "++++++++++++++++ onCancel +++++++++++++++++");
+                            isDownloading = false;
+                            mListener.onCancel();
+                            System.gc();
+                        }
+                    }
+
+                }
+
+                if (isStop) {
+                    synchronized (ScriptUtil.class) {
+                        mStopNum++;
+                        String position = String.valueOf(currentPosition);
+                        Log.i(TAG, "thread_" + downloadInfo.threadId + "_stop, stop location ==> " + position);
+                        writeConfig(configFilePath, downloadInfo.tempFile.getName() + "_recode_" + downloadInfo.threadId, position);
+                        if (mStopNum == DOWNLOAD_THREAD_NUM) {
+                            Log.d(TAG, "run: +++++++++++++++++download stop+++++++++++++++");
+                            isDownloading = false;
+                            mListener.onStop(mCurrentPosition);
+                            System.gc();
+                        }
+                    }
+                }
+                Log.i(TAG, "线程【" + downloadInfo.threadId + "】下载完毕");
+                writeConfig(configFilePath, downloadInfo.tempFile.getName() + "_state_" + downloadInfo.threadId, 1 + "");
+                mListener.onChildComplete(downloadInfo.endPosition);
+                mCompleteThreadNum++;
+                if (mCompleteThreadNum == DOWNLOAD_THREAD_NUM) {
+                    File configFile = new File(configFilePath);
+                    if (configFile.exists()) {
+                        configFile.delete();
+                    }
+                    mListener.onComplete();
+                    isDownloading = false;
+                    System.gc();
+                }
+            } catch (MalformedURLException e) {
+                e.printStackTrace();
+                isDownloading = false;
+                mListener.onFail();
+            } catch (IOException e) {
+                e.printStackTrace();
+                isDownloading = false;
+                mListener.onFail();
+            }
+        }
+    }
+
+    public static void download(@NonNull final String downloadUrl, @NonNull final String filePath, @NonNull final DownloadListener downloadListener) {
+
+        final File downloadFile = new File(filePath);
+        final String configPath = mContext.getFilesDir().getPath() + "/temp/" + downloadFile.getName() + ".properties";
+        final File configFile = new File(configPath);
+        if (!configFile.exists()) {
+            isNewTask = true;
+            boolean isCreate =createFile(configPath);
+            Log.d(TAG, "download: "+configPath+" "+isCreate);
+        } else {
+            isNewTask = false;
+            Log.d(TAG, "download: isNewTask"+isNewTask+" "+configPath);
+        }
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                mListener = downloadListener;
+                URL url = null;
+                HttpURLConnection conn = null;
+                try {
+                    url = new URL(downloadUrl);
+                    conn = (HttpURLConnection) url.openConnection();
+                    conn.setRequestMethod("GET");
+                    conn.setRequestProperty("Charset", "UTF-8");
+                    conn.setConnectTimeout(10000);
+                    conn.setRequestProperty("User-Agent", "Mozilla/4.0 (compatible; MSIE 8.0; Windows NT 5.2; Trident/4.0; .NET CLR 1.1.4322; .NET CLR 2.0.50727; .NET CLR 3.0.04506.30; .NET CLR 3.0.4506.2152; .NET CLR 3.5.30729)");
+                    conn.setRequestProperty("Accept", "image/gif, image/jpeg, image/pjpeg, image/pjpeg, application/x-shockwave-flash, application/xaml+xml, application/vnd.ms-xpsdocument, application/x-ms-xbap, application/x-ms-application, application/vnd.ms-excel, application/vnd.ms-powerpoint, application/msword, */*");
+                    conn.connect();
+                    int len = conn.getContentLength();
+                    if (len < 0) {  //网络被劫持时会出现这个问题
+                        mListener.onFail();
+                        return;
+                    }
+                    int code = conn.getResponseCode();
+                    if (code == 200) {
+                        boolean isCreate=createFile(filePath);
+                        Log.d(TAG, "run: isCreate:"+filePath+" "+isCreate);
+                        int fileLength = conn.getContentLength();
+                        RandomAccessFile file = new RandomAccessFile(filePath, "rwd");
+                        file.setLength(fileLength);
+                        mListener.onPreDownload(conn);
+
+                        Properties properties = readConfig(configPath);
+                        int blockSize = fileLength / DOWNLOAD_THREAD_NUM;
+                        SparseArray<Thread> tasks = new SparseArray<>();
+                        for (int i = 0; i < DOWNLOAD_THREAD_NUM; i++) {
+                            long startPosition = i * blockSize;
+                            long endPosition = (i + 1) * blockSize;
+                            String status = properties.getProperty(downloadFile.getName() + "_status_" + i);
+                            if (status != null && Integer.parseInt(status) == 1) {
+                                mCurrentPosition += endPosition - startPosition;
+                                Log.d(TAG, "++++++++++ 线程_" + i + "_已经下载完成 ++++++++++");
+                                mCompleteThreadNum++;
+                                if (mCompleteThreadNum == DOWNLOAD_THREAD_NUM) {
+                                    if (configFile.exists()) {
+                                        configFile.delete();
+                                    }
+                                    isDownloading = false;
+                                    mListener.onComplete();
+                                    System.gc();
+                                    return;
+                                }
+                            }
+                            String record = properties.getProperty(downloadFile.getName() + "_record_" + i);
+                            if (!isNewTask && record != null && Integer.parseInt(record) > 0) {
+                                long rec = Integer.parseInt(record);
+                                mCurrentPosition += rec - startPosition;
+                                Log.d(TAG, "++++++++++ 线程_" + i + "_恢复下载 ++++++++++");
+                                mListener.onChildResume(mCurrentPosition);
+                                startPosition = rec;
+                            }
+                            if (i == (DOWNLOAD_THREAD_NUM - 1)) {
+                                endPosition = fileLength;//如果整个文件的大小不为线程个数的整数倍，则最后一个线程的结束位置即为文件的总长度
+                            }
+                            DownloadEntity entity = new DownloadEntity(downloadUrl, downloadFile, fileLength, startPosition, endPosition, i);
+                            DownloadTask task = new DownloadTask(entity);
+                            tasks.put(i, new Thread(task));
+                            if (mCurrentPosition > 0) {
+                                mListener.onResume(mCurrentPosition);
+                            } else {
+                                mListener.onStart(mCurrentPosition);
+                            }
+                        }
+                        for (int i = 0, count = tasks.size(); i < count; i++) {
+                            Thread task = tasks.get(i);
+                            if (task != null) {
+                                task.start();
+                            }
+                        }
+                    } else {
+                        isDownloading = false;
+                        mListener.onFail();
+                        Log.d(TAG, "run: 下载失败：返回码 " + code);
+                    }
+                } catch (MalformedURLException e) {
+                    e.printStackTrace();
+                    isDownloading = false;
+                    mListener.onFail();
+                } catch (ProtocolException e) {
+                    e.printStackTrace();
+                    isDownloading = false;
+                    mListener.onFail();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                    isDownloading = false;
+                    mListener.onFail();
+                }
+            }
+        }).start();
+    }
+
+    public static boolean createFile(String filePath) {
+        File file = new File(filePath);
+        try {
+            if (!file.exists()) {
+                File dir = new File(file.getParent());
+                if (!dir.exists()) {
+                    dir.mkdirs();
+                }
+                return file.createNewFile();
+            }
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            return false;
+        }
+        return true;
+    }
+
+
+    public static Properties readConfig(String filePath) {
+        Properties properties = null;
+        try {
+            properties = new Properties();
+            FileInputStream is = new FileInputStream(filePath);
+            properties.load(is);
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return properties;
+    }
+
+    public static boolean writeConfig(String filePath, String key, String value) {
+        File file = new File(filePath);
+        Properties properties = new Properties();
+        properties.setProperty(key, value);
+        try {
+            if (!file.exists()) {
+                file.createNewFile();
+            }
+            FileOutputStream fos = new FileOutputStream(file);
+            properties.store(fos, "");
+        } catch (IOException e) {
+            e.printStackTrace();
+            return false;
+        }
+        return true;
+    }
+
+    public interface IDownloadListener {
+
+        public void onPreDownload(HttpURLConnection connection);
+
+        public void onStart(long startPosition);
+
+        public void onProgress(long currentPosition);
+
+        public void onChildComplete(long finishPosition);
+
+        public void onChildResume(long resumePosition);
+
+        public void onResume(long resumePosition);
+
+        public void onComplete();
+
+        public void onCancel();
+
+        public void onFail();
+
+        public void onStop(long stopPosition);
+    }
+
+    public static class DownloadListener implements IDownloadListener {
+
+        @Override
+        public void onPreDownload(HttpURLConnection connection) {
+
+        }
+
+        @Override
+        public void onStart(long startPosition) {
+
+        }
+
+        @Override
+        public void onProgress(long currentPosition) {
+
+        }
+
+        @Override
+        public void onChildComplete(long finishPosition) {
+
+        }
+
+        @Override
+        public void onChildResume(long resumePosition) {
+
+        }
+
+        @Override
+        public void onResume(long resumePosition) {
+
+        }
+
+        @Override
+        public void onComplete() {
+
+        }
+
+        @Override
+        public void onCancel() {
+
+        }
+
+        @Override
+        public void onFail() {
+
+        }
+
+        @Override
+        public void onStop(long stopPosition) {
+
+        }
+    }
+
 }
+
 
 

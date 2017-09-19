@@ -10,10 +10,12 @@ import android.location.Location;
 import android.net.wifi.WifiManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
 import android.os.Message;
+import android.os.Process;
 import android.provider.Settings;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
@@ -31,12 +33,15 @@ import com.imchen.testhook.utils.ContextUtil;
 import com.imchen.testhook.utils.JsonUtil;
 import com.imchen.testhook.utils.LogUtil;
 import com.imchen.testhook.utils.PhoneInfoUtil;
+import com.imchen.testhook.utils.Utils;
 
 import org.json.JSONObject;
 
 import java.io.File;
 import java.io.IOException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 
 @SuppressWarnings("WrongConstant")
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
@@ -116,7 +121,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         Intent intent = new Intent(MainActivity.this, ReadViewService.class);
         startService(intent);
-        initDir("/sdcard/testhook/test.json");
+        initDir("/sdcard/testhook/test"+formatTime(new Date())+".json");
 //        testAirplaneMode();
 
 
@@ -142,7 +147,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         mLocationTv = (TextView) findViewById(R.id.tv_location_info);
         mBuildTv = (TextView) findViewById(R.id.tv_build_info);
         mTelePhoneTv = (TextView) findViewById(R.id.tv_telephone_info);
-        mDirTv= (TextView) findViewById(R.id.tv_dir);
+        mDirTv = (TextView) findViewById(R.id.tv_dir);
 //        mTvDump = (TextView) FloatViewUtil.mLinearLayout.findViewById(R.id.tv_dump);
     }
 
@@ -248,14 +253,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         Telephony telephony = service.info.getTelephony();
         Build build = service.info.getBuild();
         try {
-            String line="";
-            if (fileList!=null){
-                for (String fileName:fileList
-                     ) {
-                    line+=fileName+"\n";
+            String line = "";
+            if (fileList != null) {
+                for (String fileName : fileList
+                        ) {
+                    line += fileName + "\n";
                 }
             }
-            mDirTv.setText("ApplicatoinDir: "+applicationDir+"\nfile: "+line);
+            mDirTv.setText("ApplicatoinDir: " + applicationDir + "\nfile: " + line);
             mBluetoothTv.setText("MAC Address: " + bluetooth.getAddress());
             mBatteryTv.setText("Battery Level: " + battery.getLevel() + "\nBattery Scale: " + battery.getScale());
             mTelePhoneTv.setText("Imei: " + telephony.getDeviceId() + "\nImsi:" + telephony.getSubscriberId() + "\nVoiceMailAlphaTag: " + telephony.getVoiceMailAlphaTag() +
@@ -307,26 +312,40 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     public void initDir(String baseDir) {
         File file = new File(baseDir);
         File dir = new File(file.getParent());
+        File newFile=new File(Environment.getExternalStorageDirectory()+"/test.txt");
+        LogUtil.log("sdEnv: "+ Environment.getExternalStorageDirectory());
         try {
+        newFile.createNewFile();
+            LogUtil.log("absPath:"+newFile.getAbsolutePath()+" proc:"+ Process.myUid());
             if (!dir.exists()) {
                 dir.mkdirs();
 
                 file.createNewFile();
 
             } else {
-                if (!file.exists()){
+                if (!file.exists()) {
                     file.createNewFile();
                 }
             }
-        } catch (IOException e) {
+        File file1=new File(Environment.getExternalStorageDirectory()+"/10098/testhook/test.txt");
+        file1.createNewFile();
+        Utils.wirteStringToFile(file1.getPath(),"dfafdsfgaerwqrqwrwrq");
+        } catch (Exception e) {
             e.printStackTrace();
         }
-        applicationDir=file.getParent();
-        fileList=new ArrayList<>();
-        for (File list:dir.listFiles()
-             ) {
+        String result=Utils.readSDCardFile(Environment.getExternalStorageDirectory()+"/testhook/test.txt");
+        LogUtil.log("read result: "+result);
+        applicationDir = file.getParent();
+        fileList = new ArrayList<>();
+        for (File list : dir.listFiles()
+                ) {
             fileList.add(list.getName());
         }
+    }
+
+    public String formatTime(Date date) {
+        SimpleDateFormat spdf = new SimpleDateFormat("hh-mm-ss");
+        return spdf.format(date);
     }
 
 }
