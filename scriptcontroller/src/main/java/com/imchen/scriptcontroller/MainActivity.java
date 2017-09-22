@@ -3,6 +3,8 @@ package com.imchen.scriptcontroller;
 import android.os.Bundle;
 import android.os.Environment;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
+import android.view.KeyEvent;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -20,11 +22,25 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private EditText mPackageNameEt;
 
     @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+        Log.d("imchen", "onKeyDown: "+event.getAction());
+        return super.onKeyDown(keyCode, event);
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+
+    }
+
+    @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         initView();
         initListener();
+
+
     }
 
     public void initView(){
@@ -113,6 +129,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         public void onStop(long stopPosition) {
             super.onStop(stopPosition);
         }
+
     }
 
 }

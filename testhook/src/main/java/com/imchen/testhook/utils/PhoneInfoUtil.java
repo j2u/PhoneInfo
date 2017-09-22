@@ -46,7 +46,7 @@ import android.widget.Toast;
 import com.imchen.testhook.Entity.Battery;
 import com.imchen.testhook.Entity.Bluetooth;
 import com.imchen.testhook.Entity.Codes;
-import com.imchen.testhook.Entity.Display;
+import com.imchen.testhook.Entity.Screen;
 import com.imchen.testhook.Entity.Telephony;
 import com.imchen.testhook.Entity.Version;
 import com.imchen.testhook.Entity.Wifi;
@@ -91,9 +91,7 @@ public class PhoneInfoUtil {
             switch (msg.what) {
                 case 0x1:
                     Location location = msg.getData().getParcelable("location");
-                    MainActivity.mLocationTv.setText("Latitude: " + location.getLatitude() + "\nLongitude: " + location.getLongitude() +
-                            "\nAccuracy: " + location.getAccuracy() + "\nAltitude: " + location.getAltitude() + "\nSpeed: " + location.getSpeed() +
-                            "\nTime: " + location.getTime());
+                    MainActivity.mLocationTv.setText(location.toString());
                     break;
             }
         }
@@ -149,7 +147,7 @@ public class PhoneInfoUtil {
 //        getTotalMemory();
 //        getWeithAndHeight(activity);
 //        getBuildInfo();
-//        getTelephoneInfo();
+//        getTelephonyInfo();
 //        getBatteryInfo();
 //        getDisplayInfo(activity);
 ////        batteryReciver();
@@ -555,7 +553,7 @@ public class PhoneInfoUtil {
             }
             locationManager.requestLocationUpdates(provider, 3000, 0, myGPSListener);
 
-            //   locationManager.removeUpdates(myGPSListener);
+            locationManager.removeUpdates(myGPSListener);
         } catch (Exception e) {
             e.printStackTrace();
             LogUtil.log(e);
@@ -1099,7 +1097,7 @@ public class PhoneInfoUtil {
             build.setHOST(Build.HOST);
             build.setID(Build.ID);
 //            build.setIS_DEBUGGABLE(Build.);
-            build.setMANUFACTURRER(Build.MANUFACTURER);
+            build.setMANUFACTURER(Build.MANUFACTURER);
             build.setMODEL(Build.MODEL);
             build.setPRODUCT(Build.PRODUCT);
             build.setRADIO(Build.RADIO);
@@ -1115,7 +1113,7 @@ public class PhoneInfoUtil {
             version.setSDK(Build.VERSION.SDK);
             version.setSDK_INT(Build.VERSION.SDK_INT);
             version.setINCREMENTAL(Build.VERSION.INCREMENTAL);
-            build.setVERSION(version);
+//            build.set(version);
         } catch (Exception e) {
             LogUtil.log("getBuildInfo: " + e);
         }
@@ -1147,7 +1145,7 @@ public class PhoneInfoUtil {
     /**
      * 获取电话信息
      */
-    public static Telephony getTelephoneInfo() {
+    public static Telephony getTelephonyInfo() {
         TelephonyManager telephoneManager = (TelephonyManager) mContext.getSystemService(Context.TELEPHONY_SERVICE);
         Telephony telephony = new Telephony();
         String DeviceId = telephoneManager.getDeviceId();
@@ -1210,11 +1208,11 @@ public class PhoneInfoUtil {
      *
      * @param activity
      */
-    public static Display getDisplayInfo(Activity activity) {
+    public static Screen getScreenInfo(Activity activity) {
 //        DisplayManager disPlayManager= (DisplayManager) context.getSystemService(Context.DISPLAY_SERVICE);
         DisplayMetrics dm = new DisplayMetrics();
         activity.getWindowManager().getDefaultDisplay().getMetrics(dm);
-        Display display = new Display();
+        Screen display = new Screen();
 
 //        dm=context.getResources().getDisplayMetrics();
         int widthPixel = dm.widthPixels;

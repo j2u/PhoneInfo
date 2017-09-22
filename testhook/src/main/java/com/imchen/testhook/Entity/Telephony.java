@@ -2,6 +2,8 @@ package com.imchen.testhook.Entity;
 
 import android.telephony.CellInfo;
 
+import com.google.gson.annotations.SerializedName;
+
 import java.util.List;
 
 /**
@@ -10,18 +12,31 @@ import java.util.List;
 
 public class Telephony {
 
+    @SerializedName("Telephony.DeviceId")
     private String DeviceId;
+    @SerializedName("Telephony.IsimDomain")
     private String IsimDomain;
+    @SerializedName("Telephony.IsimImpi")
     private String IsimImpi;
+    @SerializedName("Telephony.VoiceMailAlphaTag")
     private String VoiceMailAlphaTag;
+    @SerializedName("Telephony.Msisdn")
     private String Msisdn;
+    @SerializedName("Telephony.Line1AlphaTag")
     private String Line1AlphaTag;
+    @SerializedName("Telephony.Line1Number")
     private String Line1Number;
+    @SerializedName("Telephony.IccSerialNumber")
     private String IccSerialNumber;
+    @SerializedName("Telephony.SubscriberId")
     private String SubscriberId;
+    @SerializedName("Telephony.GroupIdLevel1")
     private String GroupIdLevel1;
+    @SerializedName("Telephony.DeviceSvn")
     private String DeviceSvn;
+    @SerializedName("Telephony.VoiceMailNumber")
     private String VoiceMailNumber;
+    @SerializedName("Telephony.allCellInfo")
     private List<CellInfo> allCellInfo;
 
     public Telephony( ) {
@@ -129,5 +144,24 @@ public class Telephony {
 
     public void setVoiceMailNumber(String voiceMailNumber) {
         VoiceMailNumber = voiceMailNumber;
+    }
+
+    @Override
+    public String toString() {
+        return "Telephony{" +
+                "\n DeviceId='" + DeviceId + '\'' +
+                "\n IsimDomain='" + IsimDomain + '\'' +
+                "\n IsimImpi='" + IsimImpi + '\'' +
+                "\n VoiceMailAlphaTag='" + VoiceMailAlphaTag + '\'' +
+                "\n Msisdn='" + Msisdn + '\'' +
+                "\n Line1AlphaTag='" + Line1AlphaTag + '\'' +
+                "\n Line1Number='" + Line1Number + '\'' +
+                "\n IccSerialNumber='" + IccSerialNumber + '\'' +
+                "\n SubscriberId='" + SubscriberId + '\'' +
+                "\n GroupIdLevel1='" + GroupIdLevel1 + '\'' +
+                "\n DeviceSvn='" + DeviceSvn + '\'' +
+                "\n VoiceMailNumber='" + VoiceMailNumber + '\'' +
+                "\n allCellInfo=" + allCellInfo +
+                "\n}";
     }
 }

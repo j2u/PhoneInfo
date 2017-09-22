@@ -1,5 +1,7 @@
 package com.imchen.testhook;
 
+import android.Manifest;
+import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.ComponentName;
 import android.content.ContentResolver;
@@ -17,10 +19,12 @@ import android.os.Looper;
 import android.os.Message;
 import android.os.Process;
 import android.provider.Settings;
+import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.imchen.testhook.Entity.Battery;
 import com.imchen.testhook.Entity.Bluetooth;
@@ -30,18 +34,22 @@ import com.imchen.testhook.Entity.Wifi;
 import com.imchen.testhook.service.PhoneInfoService;
 import com.imchen.testhook.service.ReadViewService;
 import com.imchen.testhook.utils.ContextUtil;
+import com.imchen.testhook.utils.HttpUtil;
 import com.imchen.testhook.utils.JsonUtil;
 import com.imchen.testhook.utils.LogUtil;
+import com.imchen.testhook.utils.PermissionUtil;
 import com.imchen.testhook.utils.PhoneInfoUtil;
 import com.imchen.testhook.utils.Utils;
+import com.imchen.testhook.utils.ViewUtil;
 
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.File;
-import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 
 @SuppressWarnings("WrongConstant")
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
@@ -59,26 +67,35 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private Button mAirPlaneBtn;
     private Button mServiceBtn;
 
-    private TextView mBluetoothTv;
-    private TextView mWifiTv;
-    private TextView mBatteryTv;
-    private TextView mTelePhoneTv;
-    private TextView mBuildTv;
-    private TextView mDirTv;
+    private static TextView mBluetoothTv;
+    private static TextView mWifiTv;
+    private static TextView mBatteryTv;
+    private static TextView mTelePhoneTv;
+    private static TextView mBuildTv;
+    private static TextView mDirTv;
     private static TextView mTvDump;
     public static TextView mLocationTv;
 
     private ProgressDialog progressDialog;
-    private PhoneInfoUtil phoneInfoUtil;
-    private PhoneInfoService service;
+    private static PhoneInfoService service;
     private Context mContext;
+    private static Activity mActivity;
+
+
+    public static int applying = 0;
+    public static PermissionUtil.IRequestPermissionListener mPermissionListener;
+
 
     private static String dumpViewContent = "";
 
     public final static int REFRESH_FLOAT_VIEW = 0x123;
+    public final static int REQUEST_PERMISSION_RESULT = 0x112;
+    public final static int SET_VIEW_INFO = 0x111;
+    public final static int NETWORK_EXCEPTION=0x404;
+    private final static String PHONE_INFO_API = "http://192.168.1.99:8080/adserver/manager/device/newconfig";
 
-    public String applicationDir;
-    public ArrayList<String> fileList;
+    public static String applicationDir;
+    public static ArrayList<String> fileList;
 
     public static Handler mHandler = new Handler() {
         @Override
@@ -98,6 +115,20 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                             "\nAccuracy: " + location.getAccuracy() + "\nAltitude: " + location.getAltitude() + "\nSpeed: " + location.getSpeed() +
                             "\nTime: " + location.getTime());
                     break;
+                case REQUEST_PERMISSION_RESULT:
+                    applying = 0;
+                    HashMap<String, Integer> resultMaps = (HashMap<String, Integer>) msg.obj;
+                    for (String key : resultMaps.keySet()) {
+                        int result = resultMaps.get(key);
+                    }
+                    break;
+                case SET_VIEW_INFO:
+
+                    break;
+                case NETWORK_EXCEPTION:
+                    String exception= msg.obj.toString();
+                    ViewUtil.hintDialog(mActivity,"Error info!",exception,"Tell Me");
+                    break;
                 default:
                     break;
             }
@@ -109,19 +140,36 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         super.onCreate(savedInstanceState);
         new ContextUtil();
         mContext = getApplicationContext();
+        mActivity = MainActivity.this;
         setContentView(R.layout.activity_main);
 //        FloatViewUtil.addFloatView(mContext);
         findViewInit();
         listenerInit();
-        JsonUtil.getJo(null);
-        JsonUtil.writeJson();
+//        JsonUtil.getJo(null);
+//        JsonUtil.writeJson();
 //        LogUtil.log("calling uid: " + Binder.getCallingUid());
 //        LogUtil.log("Model: " + android.os.Build.MODEL);
 //        LogUtil.log("Manufacture:" + android.os.Build.MANUFACTURER);
 
         Intent intent = new Intent(MainActivity.this, ReadViewService.class);
         startService(intent);
-        initDir("/sdcard/testhook/test"+formatTime(new Date())+".json");
+        if (!PermissionUtil.checkPermission(MainActivity.this, Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
+            PermissionUtil.requestPermission(MainActivity.this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                    Manifest.permission.READ_EXTERNAL_STORAGE}, PermissionUtil.READ_WRITE_EXTERNAL_STORAGE, new PermissionUtil.IRequestPermissionListener() {
+                @Override
+                public void success(String permissionName) {
+                    initDir("/sdcard/testhook/test" + formatTime(new Date()) + ".json");
+                }
+
+                @Override
+                public void fail(String permissionName) {
+
+                }
+            });
+        } else {
+            initDir("/sdcard/testhook/test" + formatTime(new Date()) + ".json");
+        }
+
 //        testAirplaneMode();
 
 
@@ -167,12 +215,19 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         @Override
         public void run() {
             Looper.prepare();
-            service = new PhoneInfoService();
-            String info = service.getAllPhoneInfo();//获取信息
-//            setViewInfo(service);
-            new updateViewTask().execute(service);
-//            LogUtil.log("info.json: " + info);
-//            HttpUtil.doPost("192.168.1.123", info);
+            try {
+                service = new PhoneInfoService();
+                String jsonInfo = service.getAllPhoneInfo(MainActivity.this);//获取信息
+                new updateViewTask().execute(service);
+                LogUtil.log("info.json: " + jsonInfo);
+                String result = HttpUtil.doPost(PHONE_INFO_API, jsonInfo);
+                JSONObject json = new JSONObject(result);
+                result = json.getInt("code")== 0 ? "Success!" : "Fail!";
+                Toast.makeText(mContext, "Post info " + result, Toast.LENGTH_SHORT).show();
+                LogUtil.log("post result: " + result);
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
             Looper.loop();
         }
     };
@@ -182,6 +237,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         switch (v.getId()) {
             case R.id.btn_onekey:
                 new Thread(myRunable).start();
+//                Message msg=new Message();
+//                msg.what=SET_VIEW_INFO;
+//                msg.obj=service;
+//                mHandler.sendMessage(msg);
+//                new updateViewTask().execute(service);
+//                LogUtil.log("info.json: " + jsonInfo);
                 break;
             case R.id.btn_install:
                 Intent intent = new Intent(MainActivity.this, InstallActivity.class);
@@ -240,12 +301,17 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         @Override
         protected void onPostExecute(Object o) {
             setViewInfo(service);
+            try {
+                Thread.sleep(500);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
             progressDialog.cancel();
 
         }
     }
 
-    public void setViewInfo(PhoneInfoService service) {
+    public static void setViewInfo(PhoneInfoService service) {
         Battery battery = service.info.getBattery();
         Bluetooth bluetooth = service.info.getBluetooth();
         com.imchen.testhook.Entity.Location location = service.info.getLocation();
@@ -261,14 +327,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 }
             }
             mDirTv.setText("ApplicatoinDir: " + applicationDir + "\nfile: " + line);
-            mBluetoothTv.setText("MAC Address: " + bluetooth.getAddress());
-            mBatteryTv.setText("Battery Level: " + battery.getLevel() + "\nBattery Scale: " + battery.getScale());
-            mTelePhoneTv.setText("Imei: " + telephony.getDeviceId() + "\nImsi:" + telephony.getSubscriberId() + "\nVoiceMailAlphaTag: " + telephony.getVoiceMailAlphaTag() +
-                    "\nGroupIdLevel1: " + telephony.getGroupIdLevel1());
+            mBluetoothTv.setText(bluetooth.toString());
+            mBatteryTv.setText(battery.toString());
+            mTelePhoneTv.setText(telephony.toString());
             mLocationTv.setText(location.toString());
-            mWifiTv.setText("Wifi MAC: " + wifi.getMacAddress() + "\nWifi BSSID: " + wifi.getBSSID() + "\nIP: " + wifi.getIp() +
-                    "\nOutNetIP:" + wifi.getOutNetIp());
-            mBuildTv.setText(build.toString() + build.getVERSION().toString() + "\n" + build.getVERSION().getCodes().toString());
+            mWifiTv.setText(wifi.toString());
+            mBuildTv.setText(build.toString());
         } catch (Exception e) {
             e.printStackTrace();
             LogUtil.log(e);
@@ -292,6 +356,71 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
     };
 
+
+    public void initDir(String baseDir) {
+        File file = new File(baseDir);
+        File dir = new File(file.getParent());
+        File newFile = new File(Environment.getExternalStorageDirectory() + "/test.txt");
+        LogUtil.log("sdEnv: " + Environment.getExternalStorageDirectory());
+        try {
+            newFile.createNewFile();
+            LogUtil.log("absPath:" + newFile.getAbsolutePath() + " proc:" + Process.myUid());
+            if (!dir.exists()) {
+                dir.mkdirs();
+
+                file.createNewFile();
+
+            } else {
+                if (!file.exists()) {
+                    file.createNewFile();
+                }
+            }
+//            File file1 = new File(Environment.getExternalStorageDirectory() + "/10098/testhook/test.txt");
+//            file1.createNewFile();
+//            Utils.wirteStringToFile(file1.getPath(), "dfafdsfgaerwqrqwrwrq");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        String result = Utils.readSDCardFile(Environment.getExternalStorageDirectory() + "/testhook/test.txt");
+        LogUtil.log("read result: " + result);
+        applicationDir = file.getParent();
+        fileList = new ArrayList<>();
+        for (File list : dir.listFiles()
+                ) {
+            fileList.add(list.getName());
+        }
+    }
+
+    public String formatTime(Date date) {
+        SimpleDateFormat sdf = new SimpleDateFormat("hh-mm-ss");
+        return sdf.format(date);
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+//        StringBuilder builder = new StringBuilder();
+        Message msg = new Message();
+        msg.what = REQUEST_PERMISSION_RESULT;
+        HashMap<String, Integer> resultMaps = new HashMap<>();
+        for (int i = 0; i < permissions.length; i++) {
+            resultMaps.put(permissions[i], grantResults[i]);
+            if (grantResults[i] == 0) {
+                mPermissionListener.success(permissions[i]);
+            } else {
+                mPermissionListener.fail(permissions[i]);
+            }
+//            builder.append(permissions[i]);
+//            builder.append(" ");
+//            String result = grantResults[i] == 0 ? " success!" : " fail!";
+//            Toast.makeText(getApplicationContext(), "Apply permission :" + builder.toString() + result, Toast.LENGTH_SHORT).show();
+        }
+        applying = 0;
+        msg.obj = resultMaps;
+        mHandler.sendMessage(msg);
+    }
+
+    //don't have permission
     public void testAirplaneMode() {
         new Thread(new Runnable() {
             @Override
@@ -308,44 +437,4 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             }
         }).start();
     }
-
-    public void initDir(String baseDir) {
-        File file = new File(baseDir);
-        File dir = new File(file.getParent());
-        File newFile=new File(Environment.getExternalStorageDirectory()+"/test.txt");
-        LogUtil.log("sdEnv: "+ Environment.getExternalStorageDirectory());
-        try {
-        newFile.createNewFile();
-            LogUtil.log("absPath:"+newFile.getAbsolutePath()+" proc:"+ Process.myUid());
-            if (!dir.exists()) {
-                dir.mkdirs();
-
-                file.createNewFile();
-
-            } else {
-                if (!file.exists()) {
-                    file.createNewFile();
-                }
-            }
-        File file1=new File(Environment.getExternalStorageDirectory()+"/10098/testhook/test.txt");
-        file1.createNewFile();
-        Utils.wirteStringToFile(file1.getPath(),"dfafdsfgaerwqrqwrwrq");
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        String result=Utils.readSDCardFile(Environment.getExternalStorageDirectory()+"/testhook/test.txt");
-        LogUtil.log("read result: "+result);
-        applicationDir = file.getParent();
-        fileList = new ArrayList<>();
-        for (File list : dir.listFiles()
-                ) {
-            fileList.add(list.getName());
-        }
-    }
-
-    public String formatTime(Date date) {
-        SimpleDateFormat spdf = new SimpleDateFormat("hh-mm-ss");
-        return spdf.format(date);
-    }
-
 }

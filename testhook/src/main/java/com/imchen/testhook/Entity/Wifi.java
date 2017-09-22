@@ -1,14 +1,20 @@
 package com.imchen.testhook.Entity;
 
+import com.google.gson.annotations.SerializedName;
+
 /**
  * Created by imchen on 2017/8/4.
  */
 
 public class Wifi {
 
+    @SerializedName("Wifi.BSSID")
     private String BSSID;
+    @SerializedName("Wifi.MacAddress")
     private String MacAddress;
+    @SerializedName("Wifi.ip")
     private String ip;
+    @SerializedName("Wifi.outNetIp")
     private String outNetIp;
 
     public String getBSSID() {
@@ -41,5 +47,15 @@ public class Wifi {
 
     public void setOutNetIp(String outNetIp) {
         this.outNetIp = outNetIp;
+    }
+
+    @Override
+    public String toString() {
+        return "Wifi{" +
+                "\n BSSID='" + BSSID + '\'' +
+                "\n MacAddress='" + MacAddress + '\'' +
+                "\n ip='" + ip + '\'' +
+                "\n outNetIp='" + outNetIp + '\'' +
+                "\n}";
     }
 }

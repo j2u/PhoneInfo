@@ -1,16 +1,24 @@
 package com.imchen.testhook.Entity;
 
+import com.google.gson.annotations.SerializedName;
+
 /**
  * Created by imchen on 2017/8/4.
  */
 
 public class Location {
 
+    @SerializedName("Location.initLatitude")
     private double initLatitude;
+    @SerializedName("Location.initLongitude")
     private double initLongitude;
+    @SerializedName("Location.altitude")
     private double altitude;
+    @SerializedName("Location.speed")
     private double speed;
+    @SerializedName("Location.bearing")
     private float bearing;
+    @SerializedName("Location.accuracy")
     private float accuracy;
 
     public Location() {
@@ -67,12 +75,12 @@ public class Location {
     @Override
     public String toString() {
         return "Location{" +
-                "\ninitLatitude=" + initLatitude +
-                "\ninitLongitude=" + initLongitude +
-                "\naltitude=" + altitude +
-                "\nspeed=" + speed +
-                "\nbearing=" + bearing +
-                "\naccuracy=" + accuracy +
-                '}';
+                "\n initLatitude=" + initLatitude +
+                "\n initLongitude=" + initLongitude +
+                "\n altitude=" + altitude +
+                "\n speed=" + speed +
+                "\n bearing=" + bearing +
+                "\n accuracy=" + accuracy +
+                "\n}";
     }
 }

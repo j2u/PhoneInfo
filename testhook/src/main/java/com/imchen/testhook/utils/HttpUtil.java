@@ -1,5 +1,9 @@
 package com.imchen.testhook.utils;
 
+import android.os.Message;
+
+import com.imchen.testhook.MainActivity;
+
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -177,7 +181,7 @@ public class HttpUtil
             conn.setRequestProperty("connection", "Keep-Alive");
             conn.setRequestMethod("POST");
             conn.setRequestProperty("Content-Type",
-                    "application/x-www-form-urlencoded");
+                    "application/json; charset=UTF-8");
             conn.setRequestProperty("charset", "utf-8");
             conn.setUseCaches(false);
             // 发送POST请求必须设置如下两行
@@ -196,6 +200,8 @@ public class HttpUtil
                 out.flush();
             }
             // 定义BufferedReader输入流来读取URL的响应
+            int code=conn.getResponseCode();
+            LogUtil.log("response code:"+code);
             in = new BufferedReader(
                     new InputStreamReader(conn.getInputStream()));
             String line;
@@ -206,6 +212,10 @@ public class HttpUtil
         } catch (Exception e)
         {
             e.printStackTrace();
+            Message msg=new Message();
+            msg.what=0x404;
+            msg.obj=e;
+            MainActivity.mHandler.sendMessage(msg);
         }
         // 使用finally块来关闭输出流、输入流
         finally

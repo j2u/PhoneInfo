@@ -1,32 +1,67 @@
 package com.imchen.testhook.Entity;
 
+import com.google.gson.annotations.SerializedName;
+
 /**
  * Created by imchen on 2017/8/4.
  */
 
 public class Build {
 
+    @SerializedName("Build.BOARD")
     private String BOARD;
+    @SerializedName("Build.BOOTLOADER")
     private String BOOTLOADER;
+    @SerializedName("Build.CPU_ABI")
     private String CPU_ABI;
+    @SerializedName("Build.CPU_ABI2")
     private String CPU_ABI2;
+    @SerializedName("Build.BRAND")
     private String BRAND;
+    @SerializedName("Build.DEVICE")
     private String DEVICE;
+    @SerializedName("Build.DISPLAY")
     private String DISPLAY;
+    @SerializedName("Build.FINGERPRINT")
     private String FINGERPRINT;
+    @SerializedName("Build.HARDWARE")
     private String HARDWARE;
+    @SerializedName("Build.HOST")
     private String HOST;
+    @SerializedName("Build.ID")
     private String ID;
+    @SerializedName("Build.IS_DEBUGGABLE")
     private String IS_DEBUGGABLE;
-    private String MANUFACTURRER;
+    @SerializedName("Build.MANUFACTURER")
+    private String MANUFACTURER;
+    @SerializedName("Build.MODEL")
     private String MODEL;
+    @SerializedName("Build.PRODUCT")
     private String PRODUCT;
+    @SerializedName("Build.RADIO")
     private String RADIO;
+    @SerializedName("Build.SERIAL")
     private String SERIAL;
+    @SerializedName("Build.TAGS")
     private String TAGS;
+    @SerializedName("Build.TIME")
     private Long TIME;
+    @SerializedName("Build.USER")
     private String USER;
-    private Version VERSION;
+//    @SerializedName("Build.VERSION")
+//    private Version VERSION;
+    @SerializedName("Build.VERSION.CODENAME")
+    private String CODENAME;
+    @SerializedName("Build.VERSION.INCREMENTAL")
+    private String INCREMENTAL;
+    @SerializedName("Build.VERSION.RELEASE")
+    private String RELEASE;
+    @SerializedName("Build.VERSION.SDK")
+    private String SDK;
+    @SerializedName("Build.VERSION.SDK_INT")
+    private Integer SDK_INT;
+    @SerializedName("Build.VERSION.CODES")
+    private Integer CODES;
 
     public String getBOARD() {
         return BOARD;
@@ -124,12 +159,12 @@ public class Build {
         this.IS_DEBUGGABLE = IS_DEBUGGABLE;
     }
 
-    public String getMANUFACTURRER() {
-        return MANUFACTURRER;
+    public String getMANUFACTURER() {
+        return MANUFACTURER;
     }
 
-    public void setMANUFACTURRER(String MANUFACTURRER) {
-        this.MANUFACTURRER = MANUFACTURRER;
+    public void setMANUFACTURER(String MANUFACTURER) {
+        this.MANUFACTURER = MANUFACTURER;
     }
 
     public String getMODEL() {
@@ -188,35 +223,83 @@ public class Build {
         this.USER = USER;
     }
 
-    public Version getVERSION() {
-        return VERSION;
+    public String getCODENAME() {
+        return CODENAME;
     }
 
-    public void setVERSION(Version VERSION) {
-        this.VERSION = VERSION;
+    public void setCODENAME(String CODENAME) {
+        this.CODENAME = CODENAME;
+    }
+
+    public String getINCREMENTAL() {
+        return INCREMENTAL;
+    }
+
+    public void setINCREMENTAL(String INCREMENTAL) {
+        this.INCREMENTAL = INCREMENTAL;
+    }
+
+    public String getRELEASE() {
+        return RELEASE;
+    }
+
+    public void setRELEASE(String RELEASE) {
+        this.RELEASE = RELEASE;
+    }
+
+    public String getSDK() {
+        return SDK;
+    }
+
+    public void setSDK(String SDK) {
+        this.SDK = SDK;
+    }
+
+    public Integer getSDK_INT() {
+        return SDK_INT;
+    }
+
+    public void setSDK_INT(Integer SDK_INT) {
+        this.SDK_INT = SDK_INT;
+    }
+
+    public Integer getCODES() {
+        return CODES;
+    }
+
+    public void setCODES(Integer CODES) {
+        this.CODES = CODES;
     }
 
     @Override
     public String toString() {
-        return "BOARD='" + BOARD + "'\n" +
-                "BOOTLOADER='" + BOOTLOADER + "'\n" +
-                "CPU_ABI='" + CPU_ABI + "'\n" +
-                "CPU_ABI2='" + CPU_ABI2 + "'\n" +
-                "BRAND='" + BRAND + "'\n" +
-                "DEVICE='" + DEVICE + "'\n" +
-                "DISPLAY='" + DISPLAY + "'\n" +
-                "FINGERPRINT='" + FINGERPRINT + "'\n" +
-                "HARDWARE='" + HARDWARE + "'\n" +
-                "HOST='" + HOST + "'\n" +
-                "ID='" + ID + "'\n" +
-                "IS_DEBUGGABLE='" + IS_DEBUGGABLE + "'\n" +
-                "MANUFACTURRER='" + MANUFACTURRER + "'\n" +
-                "MODEL='" + MODEL + "'\n" +
-                "PRODUCT='" + PRODUCT + "'\n" +
-                "RADIO='" + RADIO + "'\n" +
-                "SERIAL='" + SERIAL + "'\n" +
-                "TAGS='" + TAGS + "'\n" +
-                "TIME=" + TIME +
-                "USER='" + USER + "'\n" ;
+        return "Build{" +
+                "\n BOARD='" + BOARD + '\'' +
+                "\n BOOTLOADER='" + BOOTLOADER + '\'' +
+                "\n CPU_ABI='" + CPU_ABI + '\'' +
+                "\n CPU_ABI2='" + CPU_ABI2 + '\'' +
+                "\n BRAND='" + BRAND + '\'' +
+                "\n DEVICE='" + DEVICE + '\'' +
+                "\n DISPLAY='" + DISPLAY + '\'' +
+                "\n FINGERPRINT='" + FINGERPRINT + '\'' +
+                "\n HARDWARE='" + HARDWARE + '\'' +
+                "\n HOST='" + HOST + '\'' +
+                "\n ID='" + ID + '\'' +
+                "\n IS_DEBUGGABLE='" + IS_DEBUGGABLE + '\'' +
+                "\n MANUFACTURER='" + MANUFACTURER + '\'' +
+                "\n MODEL='" + MODEL + '\'' +
+                "\n PRODUCT='" + PRODUCT + '\'' +
+                "\n RADIO='" + RADIO + '\'' +
+                "\n SERIAL='" + SERIAL + '\'' +
+                "\n TAGS='" + TAGS + '\'' +
+                "\n TIME=" + TIME +
+                "\n USER='" + USER + '\'' +
+                "\n CODENAME='" + CODENAME + '\'' +
+                "\n INCREMENTAL='" + INCREMENTAL + '\'' +
+                "\n RELEASE='" + RELEASE + '\'' +
+                "\n SDK='" + SDK + '\'' +
+                "\n SDK_INT=" + SDK_INT +
+                "\n CODES=" + CODES +
+                "\n}";
     }
 }

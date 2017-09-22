@@ -150,14 +150,14 @@ public class MyEditText extends EditText {
     }
 
     /**
-     * interface when click hintIcon
+     * myInterface when click hintIcon
      */
     public interface OnClickListenerWithEditTextHintIcon {
         void onClick();
     }
 
     /**
-     * interface when click toolIcon
+     * myInterface when click toolIcon
      */
     public interface OnClickListenerWithEditTextToolIcon {
         void onClick();

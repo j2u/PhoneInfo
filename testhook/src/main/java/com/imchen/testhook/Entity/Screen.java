@@ -1,15 +1,22 @@
 package com.imchen.testhook.Entity;
 
+import com.google.gson.annotations.SerializedName;
+
 /**
  * Created by imchen on 2017/8/4.
  */
 
-public class Display {
+public class Screen {
 
+    @SerializedName("Screen.WidthPixels")
     private Integer WidthPixels;
+    @SerializedName("Screen.HeightPixels")
     private Integer HeightPixels;
+    @SerializedName("Screen.DensityDpi")
     private float DensityDpi;
+    @SerializedName("Screen.Xdpi")
     private float Xdpi;
+    @SerializedName("Screen.Ydpi")
     private float Ydpi;
 
     public Integer getWidthPixels() {
@@ -50,5 +57,16 @@ public class Display {
 
     public void setYdpi(float ydpi) {
         Ydpi = ydpi;
+    }
+
+    @Override
+    public String toString() {
+        return "Screen{" +
+                "\n WidthPixels=" + WidthPixels +
+                "\n HeightPixels=" + HeightPixels +
+                "\n DensityDpi=" + DensityDpi +
+                "\n Xdpi=" + Xdpi +
+                "\n Ydpi=" + Ydpi +
+                "\n}";
     }
 }
