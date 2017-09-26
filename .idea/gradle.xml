@@ -12,6 +12,7 @@
             <option value="$PROJECT_DIR$/hookbinder" />
             <option value="$PROJECT_DIR$/ipcclient" />
             <option value="$PROJECT_DIR$/myconfig" />
+            <option value="$PROJECT_DIR$/mysocketclient" />
             <option value="$PROJECT_DIR$/phonestatus" />
             <option value="$PROJECT_DIR$/readmmmsg" />
             <option value="$PROJECT_DIR$/scriptcontroller" />

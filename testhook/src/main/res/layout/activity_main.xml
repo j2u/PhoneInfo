@@ -140,11 +140,11 @@
                 android:text="位置" />
 
             <Button
-                android:id="@+id/btn_properties"
+                android:id="@+id/btn_socket_server"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_weight="0.25"
-                android:text="配置" />
+                android:text="Socket" />
         </LinearLayout>
 
         <LinearLayout
@@ -196,6 +196,13 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="0.25"
                 android:text="script" />
+
+            <Button
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="camera"
+                android:id="@+id/btn_camera"
+                />
         </LinearLayout>
 
     </LinearLayout>

@@ -4,7 +4,6 @@ import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 
-import com.imchen.testhook.InstallActivity;
 import com.imchen.testhook.R;
 
 /**

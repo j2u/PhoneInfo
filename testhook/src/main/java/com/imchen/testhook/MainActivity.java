@@ -18,13 +18,13 @@ import android.os.IBinder;
 import android.os.Looper;
 import android.os.Message;
 import android.os.Process;
+import android.provider.MediaStore;
 import android.provider.Settings;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.imchen.testhook.Entity.Battery;
 import com.imchen.testhook.Entity.Bluetooth;
@@ -33,16 +33,13 @@ import com.imchen.testhook.Entity.Telephony;
 import com.imchen.testhook.Entity.Wifi;
 import com.imchen.testhook.service.PhoneInfoService;
 import com.imchen.testhook.service.ReadViewService;
+import com.imchen.testhook.service.ScriptService;
 import com.imchen.testhook.utils.ContextUtil;
-import com.imchen.testhook.utils.HttpUtil;
-import com.imchen.testhook.utils.JsonUtil;
 import com.imchen.testhook.utils.LogUtil;
 import com.imchen.testhook.utils.PermissionUtil;
-import com.imchen.testhook.utils.PhoneInfoUtil;
 import com.imchen.testhook.utils.Utils;
 import com.imchen.testhook.utils.ViewUtil;
 
-import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.File;
@@ -58,7 +55,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private Button mHelloBtn;
     private Button mWifiBtn;
     private Button mLocationBtn;
-    private Button mPropertiesBtn;
+    private Button mSocketBtn;
     private Button mOneKeyBtn;
     private Button mStartScriptBtn;
     private Button mUninstallBtn;
@@ -66,6 +63,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private Button mInstallBtn;
     private Button mAirPlaneBtn;
     private Button mServiceBtn;
+    private Button mCameraBtn;
 
     private static TextView mBluetoothTv;
     private static TextView mWifiTv;
@@ -81,6 +79,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private Context mContext;
     private static Activity mActivity;
 
+    private Intent socketIntent;
+    private serviceSocketConnection socketConnection;
 
     public static int applying = 0;
     public static PermissionUtil.IRequestPermissionListener mPermissionListener;
@@ -91,7 +91,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     public final static int REFRESH_FLOAT_VIEW = 0x123;
     public final static int REQUEST_PERMISSION_RESULT = 0x112;
     public final static int SET_VIEW_INFO = 0x111;
-    public final static int NETWORK_EXCEPTION=0x404;
+    public final static int NETWORK_EXCEPTION = 0x404;
     private final static String PHONE_INFO_API = "http://192.168.1.99:8080/adserver/manager/device/newconfig";
 
     public static String applicationDir;
@@ -126,8 +126,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
                     break;
                 case NETWORK_EXCEPTION:
-                    String exception= msg.obj.toString();
-                    ViewUtil.hintDialog(mActivity,"Error info!",exception,"Tell Me");
+                    String exception = msg.obj.toString();
+                    ViewUtil.hintDialog(mActivity, "Error info!", exception, "Tell Me");
                     break;
                 default:
                     break;
@@ -179,8 +179,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         mHelloBtn = (Button) findViewById(R.id.btn_hello);
         mWifiBtn = (Button) findViewById(R.id.btc_wifi);
         mLocationBtn = (Button) findViewById(R.id.btn_location);
-        mPropertiesBtn = (Button) findViewById(R.id.btn_properties);
-        mPropertiesBtn = (Button) findViewById(R.id.btn_properties);
+        mSocketBtn = (Button) findViewById(R.id.btn_socket_server);
         mOneKeyBtn = (Button) findViewById(R.id.btn_onekey);
         mStartScriptBtn = (Button) findViewById(R.id.btn_startScript);
         mUninstallBtn = (Button) findViewById(R.id.btn_uninstall);
@@ -188,6 +187,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         mInstallBtn = (Button) findViewById(R.id.btn_install);
         mAirPlaneBtn = (Button) findViewById(R.id.btn_airplane);
         mServiceBtn = (Button) findViewById(R.id.btn_service);
+        mCameraBtn= (Button) findViewById(R.id.btn_camera);
 
         mBluetoothTv = (TextView) findViewById(R.id.tv_bluetooth_info);
         mBatteryTv = (TextView) findViewById(R.id.tv_battery_info);
@@ -209,6 +209,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         mAirPlaneBtn.setOnClickListener(this);
         mServiceBtn.setOnClickListener(this);
         mStartScriptBtn.setOnClickListener(this);
+        mSocketBtn.setOnClickListener(this);
+        mCameraBtn.setOnClickListener(this);
     }
 
     Runnable myRunable = new Runnable() {
@@ -220,12 +222,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 String jsonInfo = service.getAllPhoneInfo(MainActivity.this);//获取信息
                 new updateViewTask().execute(service);
                 LogUtil.log("info.json: " + jsonInfo);
-                String result = HttpUtil.doPost(PHONE_INFO_API, jsonInfo);
-                JSONObject json = new JSONObject(result);
-                result = json.getInt("code")== 0 ? "Success!" : "Fail!";
-                Toast.makeText(mContext, "Post info " + result, Toast.LENGTH_SHORT).show();
-                LogUtil.log("post result: " + result);
-            } catch (JSONException e) {
+//                String result = HttpUtil.doPost(PHONE_INFO_API, jsonInfo);
+//                JSONObject json = new JSONObject(result);
+//                result = json.getInt("code") == 0 ? "Success!" : "Fail!";
+//                Toast.makeText(mContext, "Post info " + result, Toast.LENGTH_SHORT).show();
+//                LogUtil.log("post result: " + result);
+            } catch (Exception e) {
                 e.printStackTrace();
             }
             Looper.loop();
@@ -237,12 +239,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         switch (v.getId()) {
             case R.id.btn_onekey:
                 new Thread(myRunable).start();
-//                Message msg=new Message();
-//                msg.what=SET_VIEW_INFO;
-//                msg.obj=service;
-//                mHandler.sendMessage(msg);
-//                new updateViewTask().execute(service);
-//                LogUtil.log("info.json: " + jsonInfo);
                 break;
             case R.id.btn_install:
                 Intent intent = new Intent(MainActivity.this, InstallActivity.class);
@@ -258,25 +254,26 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 Intent intent2 = new Intent(MainActivity.this, StartscriptActivity.class);
                 startActivity(intent2);
                 break;
+            case R.id.btn_socket_server:
+                Intent consoleIntent=new Intent(MainActivity.this,ConsoleActivity.class);
+                startActivity(consoleIntent);
+//                socketConnection =new serviceSocketConnection();
+//                Intent socketIntent = new Intent(MainActivity.this, ScriptService.class);
+//                bindService(socketIntent, socketConnection, Context.BIND_AUTO_CREATE);
+                break;
             case R.id.btn_startScript:
                 JSONObject jsonObject = new JSONObject();
                 try {
                     Intent scriptIntent = new Intent("com.myrom.mm.script");
                     scriptIntent.setPackage("com.tencent.mm");
-                    bindService(scriptIntent, new ServiceConnection() {
-                        @Override
-                        public void onServiceConnected(ComponentName name, IBinder service) {
-                            LogUtil.log("connected success! " + name);
-                        }
-
-                        @Override
-                        public void onServiceDisconnected(ComponentName name) {
-                            LogUtil.log("disconnected!!!" + name);
-                        }
-                    }, Context.BIND_AUTO_CREATE);
+                    bindService(scriptIntent,new serviceSocketConnection() , Context.BIND_AUTO_CREATE);
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
+                break;
+            case R.id.btn_camera:
+                Intent openCamera=new Intent(MainActivity.this,MyCamera.class);
+                startActivity(openCamera);
                 break;
             default:
                 break;
@@ -436,5 +433,23 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 }
             }
         }).start();
+    }
+
+    public class serviceSocketConnection implements ServiceConnection {
+        @Override
+        public void onServiceConnected(ComponentName name, IBinder service) {
+
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName name) {
+
+        }
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        unbindService(socketConnection);
     }
 }

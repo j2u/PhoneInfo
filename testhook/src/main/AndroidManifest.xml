@@ -56,7 +56,10 @@
         <service
             android:name=".service.ScriptService"
             android:enabled="true"
-            android:exported="true"></service>
+            android:exported="true" />
+
+        <activity android:name=".MyCamera" />
+        <activity android:name=".ConsoleActivity"></activity>
     </application>
 
 </manifest>
