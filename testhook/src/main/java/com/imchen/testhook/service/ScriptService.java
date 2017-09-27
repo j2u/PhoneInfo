@@ -57,9 +57,11 @@ public class ScriptService extends Service {
 
         private Socket client;
         private BufferedReader reader;
+        private String address;
 
         public ClientThread(Socket client) {
             this.client=client;
+            address= String.valueOf(client.getRemoteSocketAddress());
         }
 
         @Override
@@ -70,11 +72,14 @@ public class ScriptService extends Service {
                         reader = new BufferedReader(new InputStreamReader(client.getInputStream(),"UTF-8"));
                         String line;
                         while ((line=reader.readLine())!=null){
-                            LogUtil.log("client say:*********************"+line+"*************************");
+                            LogUtil.log(address+" say:*********************"+line+"*************************");
                         }
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
+                }
+                if(!client.isConnected()){
+                    return;
                 }
             }
 

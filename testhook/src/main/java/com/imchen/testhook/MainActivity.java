@@ -203,8 +203,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         mOneKeyBtn.setOnClickListener(this);
 
         //获取settings
-        mUninstallBtn.setOnClickListener(unInstallListener);
-        mRcViewBtn.setOnClickListener(rcBtnOnClickListener);
+        mUninstallBtn.setOnClickListener(this);
+        mRcViewBtn.setOnClickListener(this);
         mInstallBtn.setOnClickListener(this);
         mAirPlaneBtn.setOnClickListener(this);
         mServiceBtn.setOnClickListener(this);
@@ -257,9 +257,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             case R.id.btn_socket_server:
                 Intent consoleIntent=new Intent(MainActivity.this,ConsoleActivity.class);
                 startActivity(consoleIntent);
-//                socketConnection =new serviceSocketConnection();
-//                Intent socketIntent = new Intent(MainActivity.this, ScriptService.class);
-//                bindService(socketIntent, socketConnection, Context.BIND_AUTO_CREATE);
                 break;
             case R.id.btn_startScript:
                 JSONObject jsonObject = new JSONObject();
@@ -270,6 +267,15 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
+                break;
+            case R.id.btn_rcview:
+                Intent rcIntent = new Intent(MainActivity.this, PackageActivity.class);
+                startActivity(rcIntent);
+                break;
+            case R.id.btn_uninstall:
+                Intent scIntent = new Intent();
+                scIntent.setClass(getApplicationContext(), ScrollingActivity.class);
+                startActivity(scIntent);
                 break;
             case R.id.btn_camera:
                 Intent openCamera=new Intent(MainActivity.this,MyCamera.class);
@@ -336,22 +342,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
     }
 
-    private View.OnClickListener unInstallListener = new View.OnClickListener() {
-        @Override
-        public void onClick(View v) {
-            Intent intent = new Intent();
-            intent.setClass(getApplicationContext(), ScrollingActivity.class);
-            startActivity(intent);
-        }
-    };
 
-    private View.OnClickListener rcBtnOnClickListener = new View.OnClickListener() {
-        @Override
-        public void onClick(View v) {
-            Intent intent = new Intent(MainActivity.this, PackageActivity.class);
-            startActivity(intent);
-        }
-    };
 
 
     public void initDir(String baseDir) {
