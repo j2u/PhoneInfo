@@ -22,11 +22,14 @@ import java.net.Socket;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
 
+    private final static String TAG="MainActivity";
+
     private EditText mContentEt;
     private EditText mHostEt;
     private EditText mPortEt;
     private Button mSendBtn;
-    private Button mConnectBtn;
+    private static Button mConnectBtn;
+    private static Button mDisconnectBtn;
 
     private final static String SERVER_ADDRESS = "127.0.0.1";
     private final static int SERVER_PORT = 3388;
@@ -39,10 +42,27 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     private static BufferedWriter writer;
 
-    private Handler mHandler = new Handler() {
+    private static Handler mHandler = new Handler() {
         @Override
         public void handleMessage(Message msg) {
-            super.handleMessage(msg);
+            switch (msg.what) {
+                case 0x1cc:
+                    if (isConnect) {
+                        Toast.makeText(mContext, "Connect success!", Toast.LENGTH_SHORT).show();
+                        mConnectBtn.setEnabled(false);
+                    } else {
+                        Toast.makeText(mContext, "Connect fail!", Toast.LENGTH_SHORT).show();
+                    }
+                    break;
+                case 0x1c1:
+                    if (!isConnect){
+                        mDisconnectBtn.setEnabled(false);
+                        mConnectBtn.setEnabled(true);
+                    }
+                    break;
+                default:
+                    break;
+            }
         }
     };
 
@@ -60,28 +80,55 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         mPortEt = (EditText) findViewById(R.id.et_port);
         mSendBtn = (Button) findViewById(R.id.btn_send_message);
         mConnectBtn = (Button) findViewById(R.id.btn_connect);
+        mDisconnectBtn = (Button) findViewById(R.id.btn_disconnect);
 
         mSendBtn.setOnClickListener(this);
         mConnectBtn.setOnClickListener(this);
+        mDisconnectBtn.setOnClickListener(this);
     }
 
     @Override
     public void onClick(View v) {
         switch (v.getId()) {
             case R.id.btn_connect:
+
                 host = mHostEt.getText().toString();
                 port = Integer.parseInt(mPortEt.getText().toString());
                 initSocketServer(host, port);
-                mConnectBtn.setEnabled(false);
+
                 break;
             case R.id.btn_send_message:
                 new Thread() {
                     @Override
                     public void run() {
                         String msg = mContentEt.getText().toString() + "\n";
-                        sendMessage(msg);
+                        int i = 0;
+                        while (true) {
+                            sendMessage("testafsadf" + i + "\n");
+                            try {
+                                i++;
+                                this.sleep(4000);
+                            } catch (InterruptedException e) {
+                                e.printStackTrace();
+                            }
+                        }
                     }
                 }.start();
+                break;
+            case R.id.btn_disconnect:
+                try {
+                    Log.d(TAG, "onClick: "+client.isConnected());
+                    if (client.isConnected()) {
+                        client.close();
+                        isConnect=false;
+//                        client.sendUrgentData(0xff);
+                    }
+                    Message msg=new Message();
+                    msg.what=0x1c1;
+                    mHandler.sendMessage(msg);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
                 break;
         }
     }
@@ -95,13 +142,16 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         client = new Socket(host, port);
                         if (client.isConnected()) {
                             isConnect = true;
+
                         } else {
                             Log.d("imchen", "run: connect is " + client.isConnected());
                         }
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
-
+                    Message msg = new Message();
+                    msg.what = 0x1cc;
+                    mHandler.sendMessage(msg);
                 }
             }).start();
 
