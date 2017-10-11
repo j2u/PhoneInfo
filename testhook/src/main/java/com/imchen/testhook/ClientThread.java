@@ -15,14 +15,17 @@ import java.net.Socket;
 
 public class ClientThread extends Thread {
 
-    private final static String TAG="ClientThread";
+    private final static String TAG = "ClientThread";
+    public boolean isOffLine = false;
     public Socket client;
-    private BufferedReader reader;
+    public BufferedReader reader;
+    public String line;
     private String address;
 
     public ClientThread(Socket client) {
         this.client = client;
-        address = String.valueOf(client.getRemoteSocketAddress());
+        address = String.valueOf(client.getInetAddress().toString().substring(1));
+        isOffLine = false;
     }
 
     @Override
@@ -30,20 +33,22 @@ public class ClientThread extends Thread {
         while (true) {
             try {
                 if (reader == null) {
-
                     reader = new BufferedReader(new InputStreamReader(client.getInputStream(), "UTF-8"));
-                    String line;
-                    while ((line = reader.readLine()) != null) {
+                    Log.d(TAG, "ClientThread reader line is "+reader);
+                    while ((line = reader.readLine()) != null&&line.length()!=0) {
                         LogUtil.log(address + " say:*********************" + line + "*************************");
-                    }
 
-                }
-                if (!client.isConnected()) {
+                    }
+                    Log.d(TAG, "ClientThread reader line is null");
+                } else {
+                    Log.d(TAG, "run: reader null");
+
+                    client.close();
+//                        Thread.sleep(1000);
+                    isOffLine = true;
                     return;
                 }
-                Log.d(TAG, "run: reader null");
 
-                Thread.sleep(1000);
 
             } catch (Exception e) {
                 e.printStackTrace();

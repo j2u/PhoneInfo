@@ -7,7 +7,7 @@
         android:layout_width="match_parent"
         android:layout_height="450dp"
         android:text="ewqrfsadfdsafsdagaffafds"
-        android:background="#9e9aae"
+        android:background="#100b02"
         android:id="@+id/et_console_view"
         />
 

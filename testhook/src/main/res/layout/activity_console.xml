@@ -7,19 +7,21 @@
     tools:context="com.imchen.testhook.ConsoleActivity">
 
 
+
     <TextView
-        android:layout_width="match_parent"
+        android:layout_width="368dp"
         android:layout_height="wrap_content"
         android:text="ip"
         android:id="@+id/tv_ip"
         android:background="#ff00ff"
-        />
+        tools:layout_editor_absoluteY="0dp"
+        tools:layout_editor_absoluteX="8dp" />
 
     <android.support.v7.widget.RecyclerView
-        android:layout_width="match_parent"
+        android:layout_width="368dp"
         android:layout_height="wrap_content"
         android:id="@+id/rc_list"
         app:layout_constraintTop_toBottomOf="@+id/tv_ip"
-        ></android.support.v7.widget.RecyclerView>
+        tools:layout_editor_absoluteX="8dp"></android.support.v7.widget.RecyclerView>
 
 </android.support.constraint.ConstraintLayout>

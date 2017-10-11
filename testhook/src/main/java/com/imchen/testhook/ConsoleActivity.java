@@ -7,10 +7,13 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.net.wifi.WifiManager;
+import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
+import android.support.annotation.RequiresApi;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.ActionBar;
@@ -33,6 +36,8 @@ import com.imchen.testhook.adapter.ConsoleAdapter;
 import com.imchen.testhook.service.ScriptService;
 
 import java.util.ArrayList;
+import java.util.Timer;
+import java.util.TimerTask;
 
 
 public class ConsoleActivity extends AppCompatActivity implements View.OnClickListener, AlertDialogFragment.DialogFragmentDataImp {
@@ -50,7 +55,11 @@ public class ConsoleActivity extends AppCompatActivity implements View.OnClickLi
     private static AlertDialog mAlertDialog;
     private Button mCancelBtn;
     private Button mConfirmBtn;
-    private TextView consoleEt;
+    private static TextView consoleEt;
+    private Timer consoleTimer;
+    private TimerTask updateTimerTask;
+
+    private int appendTime=0;
 
 
     public static ArrayList<Client> clientArrayList = new ArrayList<>();
@@ -70,6 +79,12 @@ public class ConsoleActivity extends AppCompatActivity implements View.OnClickLi
                     int position= (int) msg.obj;
                     mConsoleAdapter.notifyItemChanged(position);
                     break;
+                case 0x10ff:
+//                    updateInTimeMessage((Integer) msg.obj);
+
+//        while (true){
+                    consoleEt.setText(msg.obj.toString());
+                    break;
                 default:
                     break;
             }
@@ -81,7 +96,6 @@ public class ConsoleActivity extends AppCompatActivity implements View.OnClickLi
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_console);
         mContext = getApplicationContext();
-        ActionBar actionBar=getSupportActionBar();
         init();
     }
 
@@ -96,24 +110,53 @@ public class ConsoleActivity extends AppCompatActivity implements View.OnClickLi
         mIpTv = (TextView) findViewById(R.id.tv_ip);
         mRecyclerView = (RecyclerView) findViewById(R.id.rc_list);
         mLinearLayoutManager = new LinearLayoutManager(this);
+        //升序降序
 //        mLinearLayoutManager.setStackFromEnd(true);
 //        mLinearLayoutManager.setReverseLayout(true);
         mRecyclerView.setLayoutManager(mLinearLayoutManager);
         mConsoleAdapter = new ConsoleAdapter(clientArrayList);
         mRecyclerView.setAdapter(mConsoleAdapter);
 
+        //显示ip
         mIpTv.setText(getMyIp());
-
         DefaultItemAnimator defaultItemAnimator = new DefaultItemAnimator();
         defaultItemAnimator.setAddDuration(1000);
         defaultItemAnimator.setMoveDuration(1000);
         mRecyclerView.setItemAnimator(defaultItemAnimator);
         mRecyclerView.addOnItemTouchListener(new ItemClickListener(mRecyclerView, new ItemClickListener.OnItemClickListener() {
             @Override
-            public void onItemClick(View view, int position) {
+            public void onItemClick(View view, final int position) {
 //                showDialogFragment();
                 createAlertDialog();
                 mAlertDialog.show();
+                if (mAlertDialog.isShowing()){
+                    Client client=clientArrayList.get(position);
+                    final ClientThread thread=client.getClientThread();
+                    final StringBuilder builder=new StringBuilder();
+
+                    consoleTimer=new Timer();
+                    updateTimerTask=new TimerTask(){
+
+
+                        @RequiresApi(api = Build.VERSION_CODES.KITKAT)
+                        @Override
+                        public void run() {
+                            builder.append(thread.line);
+                            builder.append(System.lineSeparator());
+
+                            appendTime++;
+                            Message msg=new Message();
+                            msg.what=0x10ff;
+                            msg.obj=builder.toString();
+                            mHandler.sendMessage(msg);
+                            if (appendTime>10){
+                                builder.delete(0,builder.length());
+                                appendTime=0;
+                            }
+                        }
+                    };
+                    consoleTimer.schedule(updateTimerTask,0,1000);
+                }
             }
 
             @Override
@@ -147,6 +190,7 @@ public class ConsoleActivity extends AppCompatActivity implements View.OnClickLi
         mConfirmBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                cancelTimer();
                 mAlertDialog.dismiss();
             }
         });
@@ -154,6 +198,7 @@ public class ConsoleActivity extends AppCompatActivity implements View.OnClickLi
         mCancelBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                cancelTimer();
                 mAlertDialog.dismiss();
             }
         });
@@ -168,6 +213,19 @@ public class ConsoleActivity extends AppCompatActivity implements View.OnClickLi
         }
         AlertDialogFragment dialogFragment = AlertDialogFragment.newInstance("test");
         dialogFragment.show(transaction, "dialogFragment");
+    }
+
+    private static void updateInTimeMessage(int index){
+        Client client=clientArrayList.get(index);
+        ClientThread thread=client.getClientThread();
+//        while (true){
+        consoleEt.setText(thread.line);
+//            try {
+//                Thread.sleep(500);
+//            } catch (InterruptedException e) {
+//                e.printStackTrace();
+//            }
+//        }
     }
 
     @Override
@@ -205,7 +263,7 @@ public class ConsoleActivity extends AppCompatActivity implements View.OnClickLi
 
     }
 
-    public class serviceSocketConnection implements ServiceConnection {
+    private class serviceSocketConnection implements ServiceConnection {
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
             Log.d(TAG, "onServiceConnected: " + name);
@@ -226,6 +284,31 @@ public class ConsoleActivity extends AppCompatActivity implements View.OnClickLi
         if (socketConnection != null) {
             unbindService(socketConnection);
 
+        }
+    }
+
+    private void cancelTimer(){
+        if (consoleTimer!=null){
+            consoleTimer.cancel();
+            consoleTimer=null;
+        }
+        if (updateTimerTask!=null){
+            updateTimerTask.cancel();
+            updateTimerTask=null;
+        }
+    }
+
+    public  class updateViewTask extends AsyncTask<Client,Integer,String>{
+
+        @Override
+        protected String doInBackground(Client... params) {
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(String message) {
+            consoleEt.setText(message);
+//            consoleEt.setTextColor(0x0A0A0A);
         }
     }
 }
