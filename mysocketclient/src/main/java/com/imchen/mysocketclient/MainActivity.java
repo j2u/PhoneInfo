@@ -104,7 +104,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         String msg = mContentEt.getText().toString() + "\n";
                         int i = 0;
                         while (true) {
-                            sendMessage("testafsadf" + i + "\n");
+                            sendMessage("测试数据" + i + "\n");
                             try {
                                 i++;
                                 this.sleep(4000);
@@ -148,8 +148,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                                     while (true){
                                      client.sendUrgentData(0xff);
                                         Log.d(TAG, "run: sending heartbeat");
+                                        Thread.sleep(1000);
                                     }
-                                } catch (IOException e) {
+                                } catch (Exception e) {
                                     e.printStackTrace();
                                 }
                             }
@@ -185,7 +186,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             }
             writer.write(msg);
             writer.flush();
-            Log.d("imchen", "onClick: " + writer);
+            Log.d("imchen", "onClick: " +msg);
         } catch (Exception e) {
             e.printStackTrace();
         }

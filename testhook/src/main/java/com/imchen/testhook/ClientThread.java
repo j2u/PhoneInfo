@@ -2,13 +2,13 @@ package com.imchen.testhook;
 
 import android.util.Log;
 
-import com.imchen.testhook.Entity.Client;
 import com.imchen.testhook.utils.LogUtil;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.Socket;
+import java.util.LinkedList;
 
 /**
  * Created by imchen on 2017/9/29.
@@ -23,6 +23,8 @@ public class ClientThread extends Thread {
     public BufferedReader reader;
     public String line;
     private String address;
+    public LinkedList<String> msgList=new LinkedList<>();
+    private final static int MSGBOX_SIZE=10;
 
     public ClientThread(Socket client) {
         this.client = client;
@@ -39,6 +41,7 @@ public class ClientThread extends Thread {
                     Log.d(TAG, "ClientThread reader line is "+reader);
                     while (checkIsAlive(client)) {
                         if ((line = reader.readLine()) != null){
+                            addMsg(line);
                             LogUtil.log(address + " say:*********************" + line + "*************************");
                         }else {
                             LogUtil.log(address + " say:*********************" + null + "*************************");
@@ -52,6 +55,10 @@ public class ClientThread extends Thread {
                     client.close();
 //                        Thread.sleep(1000);
                     isOffLine = true;
+                    if (reader!=null){
+                        reader.close();
+                        reader=null;
+                    }
                     return;
                 }
 
@@ -61,6 +68,15 @@ public class ClientThread extends Thread {
             }
         }
 
+    }
+
+    private LinkedList<String> addMsg(String msg){
+        if (msgList.size()==MSGBOX_SIZE){
+            Log.d(TAG, "addMsg: clear msglist"+msgList.size());
+            msgList.clear();
+        }
+        msgList.add(msg);
+        return msgList;
     }
 
     public boolean checkIsAlive(Socket client){

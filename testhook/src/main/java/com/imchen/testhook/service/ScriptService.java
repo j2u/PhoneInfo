@@ -26,6 +26,9 @@ public class ScriptService extends Service {
 
     private final static int PORT = 3388;
 
+    private final static int MAX_PING_TIMES=3;
+    private int curPingTimes=0;
+
     public ScriptService() {
     }
 
@@ -118,12 +121,15 @@ public class ScriptService extends Service {
                         notifyStatus(i);
                         Log.d(TAG, "run: offLine:" + curClient.getName() + " " + curClient.getAddress());
                     }
-                    if (!checkIsAlive(curClient)){
-                        curClient.setStatus(-2);
-                        thread.isOffLine=true;
-                        notifyStatus(i);
-                        Log.d(TAG, "run: deadline:" + curClient.getName() + " " + curClient.getAddress());
+                    if (curClient.getStatus()>=0){
+                        if (!checkIsAlive(curClient)){
+                            curClient.setStatus(-2);
+                            thread.isOffLine=true;
+                            notifyStatus(i);
+                            Log.d(TAG, "run: deadline:" + curClient.getName() + " " + curClient.getAddress());
+                        }
                     }
+
 
                 }
                 try {
@@ -150,14 +156,13 @@ public class ScriptService extends Service {
      */
     public boolean checkIsAlive(Client myClient) {
         try {
+            boolean result=true;
             ClientThread thread=myClient.getClientThread();
             Socket client=thread.client;
             client.sendUrgentData(0);
-            boolean result=true;
             if (!thread.isOffLine){
                 result=pingIpAddress(client.getInetAddress().toString().substring(1));
             }
-            Log.d(TAG, "checkIsAlive: on server!");
             return result;
         } catch (IOException e) {
             e.printStackTrace();
@@ -167,14 +172,20 @@ public class ScriptService extends Service {
     }
 
     private boolean pingIpAddress(String ipAddress) {
+
         try {
             Log.d(TAG, "pingIpAddress: ping "+ipAddress);
-            Process process = Runtime.getRuntime().exec("ping -c 1 -W 5 " + ipAddress);
+            Process process = Runtime.getRuntime().exec("ping -c 1 -W 8 " + ipAddress);
             int status = process.waitFor();
             Log.d(TAG, "pingIpAddress: ping status:" + status);
             if (status == 0) {
                 return true;
             } else {
+                curPingTimes++;
+                if (curPingTimes<MAX_PING_TIMES){
+                    //try to ping 3 time
+                    pingIpAddress(ipAddress);
+                }
                 return false;
             }
         } catch (IOException e) {

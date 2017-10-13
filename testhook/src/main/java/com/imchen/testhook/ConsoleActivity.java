@@ -2,6 +2,7 @@ package com.imchen.testhook;
 
 
 import android.app.AlertDialog;
+import android.app.Dialog;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -22,10 +23,13 @@ import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.Window;
+import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -72,7 +76,7 @@ public class ConsoleActivity extends AppCompatActivity implements View.OnClickLi
                 case 0x1111:
                     mConsoleAdapter.notifyItemInserted(0);
                     mConsoleAdapter.notifyItemRangeChanged(0, clientArrayList.size());
-                    mClientNumMit.setTitle("Online:" + clientArrayList.size());
+                    mClientNumMit.setTitle("User:" + clientArrayList.size());
 //                    mConsoleAdapter.notifyDataSetChanged();
                     break;
                 case 0x1112:
@@ -81,8 +85,7 @@ public class ConsoleActivity extends AppCompatActivity implements View.OnClickLi
                     break;
                 case 0x10ff:
 //                    updateInTimeMessage((Integer) msg.obj);
-
-//        while (true){
+                    Log.d(TAG, "handleMessage: "+msg.obj.toString());
                     consoleEt.setText(msg.obj.toString());
                     break;
                 default:
@@ -129,33 +132,39 @@ public class ConsoleActivity extends AppCompatActivity implements View.OnClickLi
 //                showDialogFragment();
                 createAlertDialog();
                 mAlertDialog.show();
+                setDialogAttr(mAlertDialog);
                 if (mAlertDialog.isShowing()){
                     Client client=clientArrayList.get(position);
                     final ClientThread thread=client.getClientThread();
                     final StringBuilder builder=new StringBuilder();
 
                     consoleTimer=new Timer();
+
                     updateTimerTask=new TimerTask(){
 
 
                         @RequiresApi(api = Build.VERSION_CODES.KITKAT)
                         @Override
                         public void run() {
-                            builder.append(thread.line);
-                            builder.append(System.lineSeparator());
-
-                            appendTime++;
-                            Message msg=new Message();
-                            msg.what=0x10ff;
-                            msg.obj=builder.toString();
-                            mHandler.sendMessage(msg);
-                            if (appendTime>10){
+                            for (int i=appendTime;i<thread.msgList.size();i++){
+                                builder.append(thread.msgList.get(i));
+                                builder.append(System.lineSeparator());
+                            }
+                            String content=builder.toString();
+                            if (content!=null&&!"".equals(content)){
+                                Message msg=new Message();
+                                msg.what=0x10ff;
+                                msg.obj=content;
+                                mHandler.sendMessage(msg);
+                            }
+                            appendTime=thread.msgList.size();
+                            if (appendTime==10){
                                 builder.delete(0,builder.length());
                                 appendTime=0;
                             }
                         }
                     };
-                    consoleTimer.schedule(updateTimerTask,0,1000);
+                    consoleTimer.schedule(updateTimerTask,0,500);
                 }
             }
 
@@ -203,6 +212,15 @@ public class ConsoleActivity extends AppCompatActivity implements View.OnClickLi
             }
         });
         return mAlertDialog = mDialogBuilder.create();
+    }
+
+    public static void setDialogAttr(AlertDialog dialog){
+        Window window=dialog.getWindow();
+        WindowManager.LayoutParams lp=window.getAttributes();
+        lp.gravity= Gravity.CENTER;
+        lp.width= WindowManager.LayoutParams.MATCH_PARENT;
+        lp.height= WindowManager.LayoutParams.MATCH_PARENT;
+        dialog.getWindow().setAttributes(lp);
     }
 
     public void showDialogFragment() {

@@ -66,13 +66,13 @@ public class ConsoleAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
         switch (info.getStatus()){
             case -1:
                 status="Offline";
-                myHolder.mIcon.setImageResource(R.drawable.ic_close_black_24dp);
-                myHolder.mRowLayout.setBackgroundColor(Color.parseColor("#696969"));
+                myHolder.mIcon.setImageResource(R.drawable.icons8_pinguin_48);
+                myHolder.mRowLayout.setBackgroundColor(Color.parseColor("#FF0000"));
                 break;
             case -2:
                 status="Dropped";
-                myHolder.mIcon.setImageResource(R.drawable.icons8_pinguin_48);
-                myHolder.mRowLayout.setBackgroundColor(Color.parseColor("#FF0000"));
+                myHolder.mIcon.setImageResource(R.drawable.ic_close_black_24dp);
+                myHolder.mRowLayout.setBackgroundColor(Color.parseColor("#696969"));
                 break;
             case 1:
                 status="Online";
