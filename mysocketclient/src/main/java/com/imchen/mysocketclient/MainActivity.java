@@ -140,6 +140,20 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 public void run() {
                     try {
                         client = new Socket(host, port);
+                        client.setSoTimeout(10);
+                        new Thread(new Runnable() {
+                            @Override
+                            public void run() {
+                                try {
+                                    while (true){
+                                     client.sendUrgentData(0xff);
+                                        Log.d(TAG, "run: sending heartbeat");
+                                    }
+                                } catch (IOException e) {
+                                    e.printStackTrace();
+                                }
+                            }
+                        }).start();
                         if (client.isConnected()) {
                             isConnect = true;
 

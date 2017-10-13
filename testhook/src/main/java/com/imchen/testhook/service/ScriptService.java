@@ -55,19 +55,19 @@ public class ScriptService extends Service {
                     ClientThread thClient = new ClientThread(socket);
                     thClient.start();
 
-                    String remoteIp=socket.getInetAddress().toString().substring(1);
-                    boolean isNewUser=true;
-                    for(int i=0;i<ConsoleActivity.clientArrayList.size();i++){
-                        Client tmpClient=ConsoleActivity.clientArrayList.get(i);
-                        if (tmpClient.getAddress().equals(remoteIp)){
+                    String remoteIp = socket.getInetAddress().toString().substring(1);
+                    boolean isNewUser = true;
+                    for (int i = 0; i < ConsoleActivity.clientArrayList.size(); i++) {
+                        Client tmpClient = ConsoleActivity.clientArrayList.get(i);
+                        if (tmpClient.getAddress().equals(remoteIp)) {
                             tmpClient.setStatus(1);
                             tmpClient.setClientThread(thClient);
                             tmpClient.setName(thClient.getName());
                             notifyStatus(i);
-                            isNewUser=false;
+                            isNewUser = false;
                         }
                     }
-                    if (isNewUser){
+                    if (isNewUser) {
                         Client client = new Client();
                         client.setName(thClient.getName());
                         client.setAddress(remoteIp);
@@ -99,7 +99,8 @@ public class ScriptService extends Service {
         private ArrayList<Client> clientList;
 
         public thCheckClientStatus(ArrayList<Client> clientList) {
-            this.clientList = clientList;
+            this.clientList =clientList;
+
         }
 
         @Override
@@ -110,10 +111,18 @@ public class ScriptService extends Service {
                     Client curClient = clientList.get(i);
 //                    Log.d(TAG, "run: isOnLine:" + curClient.getName() + " " + curClient.getAddress() + " isOnline:");
                     ClientThread thread = curClient.getClientThread();
-                    if (thread.isOffLine&&curClient.getStatus()!=-1){
+
+                    if (thread.isOffLine && curClient.getStatus() == 1 ) {
                         curClient.setStatus(-1);
+                        thread.isOffLine=true;
                         notifyStatus(i);
                         Log.d(TAG, "run: offLine:" + curClient.getName() + " " + curClient.getAddress());
+                    }
+                    if (!checkIsAlive(curClient)){
+                        curClient.setStatus(-2);
+                        thread.isOffLine=true;
+                        notifyStatus(i);
+                        Log.d(TAG, "run: deadline:" + curClient.getName() + " " + curClient.getAddress());
                     }
 
                 }
@@ -126,12 +135,56 @@ public class ScriptService extends Service {
         }
     }
 
-    private void notifyStatus(int index){
+    private void notifyStatus(int index) {
         Message msg = new Message();
         msg.what = 0x1112;
         msg.obj = index;
         ConsoleActivity.mHandler.sendMessage(msg);
     }
+
+    /**
+     * send heartbeat
+     *
+     * @param myClient
+     * @return
+     */
+    public boolean checkIsAlive(Client myClient) {
+        try {
+            ClientThread thread=myClient.getClientThread();
+            Socket client=thread.client;
+            client.sendUrgentData(0);
+            boolean result=true;
+            if (!thread.isOffLine){
+                result=pingIpAddress(client.getInetAddress().toString().substring(1));
+            }
+            Log.d(TAG, "checkIsAlive: on server!");
+            return result;
+        } catch (IOException e) {
+            e.printStackTrace();
+            Log.d(TAG, "checkIsAlive: "+e );
+            return false;
+        }
+    }
+
+    private boolean pingIpAddress(String ipAddress) {
+        try {
+            Log.d(TAG, "pingIpAddress: ping "+ipAddress);
+            Process process = Runtime.getRuntime().exec("ping -c 1 -W 5 " + ipAddress);
+            int status = process.waitFor();
+            Log.d(TAG, "pingIpAddress: ping status:" + status);
+            if (status == 0) {
+                return true;
+            } else {
+                return false;
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
 
     public class MyBinder extends Binder {
         public ScriptService getService() {

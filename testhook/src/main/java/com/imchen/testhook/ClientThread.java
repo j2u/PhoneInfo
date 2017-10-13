@@ -2,9 +2,11 @@ package com.imchen.testhook;
 
 import android.util.Log;
 
+import com.imchen.testhook.Entity.Client;
 import com.imchen.testhook.utils.LogUtil;
 
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.Socket;
 
@@ -35,8 +37,12 @@ public class ClientThread extends Thread {
                 if (reader == null) {
                     reader = new BufferedReader(new InputStreamReader(client.getInputStream(), "UTF-8"));
                     Log.d(TAG, "ClientThread reader line is "+reader);
-                    while ((line = reader.readLine()) != null&&line.length()!=0) {
-                        LogUtil.log(address + " say:*********************" + line + "*************************");
+                    while (checkIsAlive(client)) {
+                        if ((line = reader.readLine()) != null){
+                            LogUtil.log(address + " say:*********************" + line + "*************************");
+                        }else {
+                            LogUtil.log(address + " say:*********************" + null + "*************************");
+                        }
 
                     }
                     Log.d(TAG, "ClientThread reader line is null");
@@ -55,5 +61,16 @@ public class ClientThread extends Thread {
             }
         }
 
+    }
+
+    public boolean checkIsAlive(Socket client){
+        try {
+            client.sendUrgentData(0);
+            Log.d(TAG, "checkIsAlive: on server!");
+            return true ;
+        } catch (IOException e) {
+            e.printStackTrace();
+            return false;
+        }
     }
 }

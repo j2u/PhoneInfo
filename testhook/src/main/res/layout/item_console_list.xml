@@ -11,6 +11,7 @@
         android:padding="1dp"
         android:elevation="2dp"
         android:background="@drawable/shape"
+        android:id="@+id/row_layout"
         >
         <ImageView
             android:layout_width="50dp"
@@ -49,6 +50,7 @@
             <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_weight="0.1"
                 >
                 <TextView
                     android:layout_width="wrap_content"
